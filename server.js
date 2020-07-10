@@ -2,7 +2,7 @@ var express = require('express')
 var cors = require('cors')
 var env = require('./env');
 var usersRoute = require('./app/routes/usersRoute');
-var testRoute = require('./app/routes/testRoute');
+var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
 
 //var uploadRoute = require('./app/routes/uploadRoute');
 //var adminRoute = require('./app/routes/adminRoute');
@@ -40,7 +40,7 @@ app.get('/about', function(req, res) {
 //app.use('/api/v1/files/upload', uploadRoute);
 //app.use('/api/v1', adminRoute);
 //app.use('/api/v1', tripRoute);
-app.use('/api/v1', testRoute);
+app.use('/api/v1', gestaoPrecosRoute);
 //app.use('/api/v1', bookingRoute);
 
 
