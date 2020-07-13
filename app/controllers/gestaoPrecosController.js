@@ -69,4 +69,6 @@ const {
 
 
 
-  module.exports = {getAllFilters, getLojasNoCluster}
+  module.exports = {getAllFilters, 
+                    getLojasNoCluster
+                    }

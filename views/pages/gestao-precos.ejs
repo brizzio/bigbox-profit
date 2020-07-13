@@ -1,0 +1,40 @@
+<!-- views/pages/about.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../partials/head'); -%>
+</head>
+<body>
+
+<header>
+    <%- include('../partials/header'); -%>
+</header>
+
+<main class="container"></main>
+<div class="row">
+    <div class="col s12">    
+        <div class="jumbotron">
+            <h1>GESTAO DE PRECOS</h1>
+            <p>Welcome to templating using EJS</p>
+        </div>
+    </div>
+
+    <div class="col s12">    
+        <div class="well">
+            <h3>lojas</h3>
+            <p><%= page.lojas %></p>
+        </div>
+    </div>
+
+    
+
+</div>
+</main>
+
+<footer>
+    <%- include('../partials/footer'); -%>
+</footer>
+
+</body>
+</html>

@@ -3,7 +3,7 @@ var cors = require('cors')
 var env = require('./env');
 var usersRoute = require('./app/routes/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
-
+var appController = require('./app/controllers/appController');
 //var uploadRoute = require('./app/routes/uploadRoute');
 //var adminRoute = require('./app/routes/adminRoute');
 
@@ -32,7 +32,12 @@ app.get('/about', function(req, res) {
 });
 
 //ROTAS DO APLICATIVO
-
+app.get('/gestao-precos', async function(req, res) {
+  var page = await appController.page()
+  console.log('a pgina é...')
+  console.log(JSON.stringify(page))
+  res.render('pages/gestao-precos',{page:page});
+});
 
 
 //ROTAS DA API

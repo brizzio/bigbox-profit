@@ -21,5 +21,20 @@ module.exports = {
           reject(err);
         });
     });
+  },
+
+  sql(quertText, params) {
+    return new Promise((resolve, reject) => {
+      console.log('executando a sql...')
+      console.log(quertText)
+      pool.query(quertText, params)
+        .then((res) => {
+          resolve(res);
+        })
+        .catch((err) => {
+          console.log(err)
+          reject(err);
+        });
+    });
   }
 };
