@@ -1,7 +1,8 @@
 var express = require('express');
 
 var { getAllFilters,
-      getLojasNoCluster } = require('../controllers/gestaoPrecosController');
+      getLojasNoCluster,
+      getDadosGestaoPrecos } = require('../controllers/gestaoPrecosController');
 //var verifyAuth = require('../middlewares/verifyAuth');
 
 const router = express.Router();
@@ -10,8 +11,14 @@ const router = express.Router();
 
 //router.post('/user', verifyAuth, createUser);
 router.get('/filters', getAllFilters);
-module.exports = router;
 
 //router.post('/user', verifyAuth, createUser);
 router.get('/lojas/:cluster', getLojasNoCluster);
+
+//Retorna os dados da gestão de precos
+router.get('/gestao/:pagina', getDadosGestaoPrecos);
+
+
+
 module.exports = router;
+

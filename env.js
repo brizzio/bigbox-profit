@@ -1,11 +1,11 @@
 module.exports = {
-    PORT:9000,
-    SERVER_PORT:9000,
+    PORT:'5656',
+    SERVER_PORT:5656,
     DB_CREDENTIALS:{
-        user: 'db_user',
-        host: 'ip_addres',
-        database: 'database name',
-        password: 'user_password',
-        port: 'database port'
+        user: 'postgres',
+        host: '3.219.57.146',
+        database: 'postgres',
+        password: 'pr0f1t#2020',
+        port: '5432'
     }
 }
