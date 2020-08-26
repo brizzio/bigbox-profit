@@ -1,3 +1,6 @@
 /node_modules
 /uploads
+env.js
 /env.js
+.vscode/settings.json
+/public/img

@@ -10,6 +10,8 @@ var appController = require('./app/controllers/appController');
 
 var app = express();
 
+app.use('/static', express.static(__dirname + '/public'));
+
 // Add middleware for parsing URL encoded bodies (which are usually sent by browser)
 app.use(cors());
 // Add middleware for parsing JSON and urlencoded data and populating `req.body`
