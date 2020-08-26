@@ -1,3 +1,4 @@
+
 //var moment = require('moment');
 
 var dbQuery = require('../db/dev/dbQuery');
@@ -187,5 +188,4 @@ const {
                     getDadosGestaoPrecos,
                     getTabelaGestaoPrecos,
                     getGeoLojas,
-                    getGeoConcorrentes
-                    }
+                    getGeoConcorrentes}

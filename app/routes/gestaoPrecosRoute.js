@@ -30,3 +30,4 @@ router.get('/geo/concorrentes', getGeoConcorrentes);
 
 module.exports = router;
 
+
