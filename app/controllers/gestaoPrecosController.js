@@ -68,12 +68,17 @@ const {
   };
 
   const getDadosGestaoPrecos = async (req, res) => {
-
-    var offs = (req.params.pagina -1)*50
-    const strQuery = `select * from bigbox.gestao_precos_view offset ${offs} limit 50;`
+    var pagina, page_items
+    
+    page_items= req.params.itensPorPagina
+    pagina=req.params.pagina 
+    var offs = (pagina -1)*page_items
+    const strQuery = `select * from bigbox.gestao_precos_view offset ${offs} limit ${page_items};`
+    
     try {
       const pages = await dbQuery.query(`select count(*) from bigbox.gestao_precos_view;`);
       console.log(JSON.stringify(pages.rows[0].count))
+      var registros = pages.rows[0].count
       const { rows } = await dbQuery.query(strQuery);
       console.log(JSON.stringify(rows))
 
@@ -83,20 +88,104 @@ const {
         return res.status(status.notfound).send(errorMessage);
       }
       
-      successMessage.paginas = pages.rows[0].count
-      successMessage.pagina = req.params.pagina
+      successMessage.registros = registros
+      successMessage.paginas = registros / page_items
+      successMessage.pagina = pagina
       successMessage.data = dbResponse;
      
       return res.status(status.success).send(successMessage);
     } catch (error) {
-      errorMessage.error = 'ocorreu um erro na função getDadosGestaoPrecos';
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+  const getTabelaGestaoPrecos = async (req, res) => {
+    
+    const strQuery = `select * from pricing_bigbox.tabela_gestao_precos;`
+    
+    try {
+      const pages = await dbQuery.query(`select count(*) from pricing_bigbox.tabela_gestao_precos;`);
+      console.log(JSON.stringify(pages.rows[0].count))
+      var registros = pages.rows[0].count
+      const { rows } = await dbQuery.query(strQuery);
+      console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Não Existem Dados';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.registros = registros
+      successMessage.paginas = 1
+      successMessage.pagina = 1
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+
+  const getGeoLojas = async (req, res) => {
+    
+    const strQuery = `select * from bigbox.cadastro_lojas;`
+    
+    try {
+      
+      const { rows } = await dbQuery.query(strQuery);
+      console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Não Existem Lojas';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+  const getGeoConcorrentes = async (req, res) => {
+    
+    const strQuery = `select * from pricing_bigbox.cadastro_concorrentes;`
+    
+    try {
+      
+      const { rows } = await dbQuery.query(strQuery);
+      console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Não Existem Lojas';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
       return res.status(status.error).send(errorMessage);
     }
   };
 
 
 
+
+
   module.exports = {getAllFilters, 
                     getLojasNoCluster,
-                    getDadosGestaoPrecos
+                    getDadosGestaoPrecos,
+                    getTabelaGestaoPrecos,
+                    getGeoLojas,
+                    getGeoConcorrentes
                     }
