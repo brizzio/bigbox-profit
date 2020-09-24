@@ -36,11 +36,6 @@ const {
   };
 
 
-
-
-
-
-
   /**
    * recupera lojas 
    * @param {object} req 
@@ -215,8 +210,12 @@ const {
     const filters = req.body
     console.log(req.body)
    
+    var page_items= parseInt(req.body.registros.replace("'","")) 
+    var pagina = parseInt(req.body.pagina.replace("'",""))
+    var offs = (pagina -1) * page_items
+
    const strQuery = `
-      select * from pricing_bigbox.filtro_multiplo_pais_proporcionais(${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao})`
+      select * from pricing_bigbox.filtro_multiplo_pais_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) offset ${offs} limit ${page_items};`
     try {
       
       const { rows } = await dbQuery.query(strQuery);
@@ -228,6 +227,8 @@ const {
         return res.status(status.notfound).send(errorMessage);
       }
       
+      successMessage.start_at = offs + 1;
+      successMessage.end_at = offs + page_items+1;
       successMessage.data = dbResponse;
      
       return res.status(status.success).send(successMessage);
@@ -241,9 +242,13 @@ const {
     
     const filters = req.body
     console.log(req.body)
+
+    var page_items= parseInt(req.body.registros.replace("'","")) 
+    var pagina = parseInt(req.body.pagina.replace("'",""))
+    var offs = (pagina -1) * page_items
    
    const strQuery = `
-      select * from pricing_bigbox.filtro_multiplo_gestao_preco_paifilho (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao})`
+      select * from pricing_bigbox.filtro_multiplo_gestao_preco_paifilho (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) offset ${offs} limit ${page_items};`
     try {
       
       const { rows } = await dbQuery.query(strQuery);
@@ -256,6 +261,37 @@ const {
         return res.status(status.notfound).send(errorMessage);
       }
       
+      successMessage.start_at = offs + 1;
+      successMessage.end_at = offs + page_items+1;
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+  const filterTableItensProporcionais = async (req, res) => {
+    
+    const filters = req.body
+    console.log(req.body)
+   
+   const strQuery = `
+      select * from pricing_bigbox.filtro_multiplo_itens_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao})`
+    try {
+      
+      const { rows } = await dbQuery.query(strQuery);
+      console.log(rows)
+
+      const dbResponse = rows;
+      //console.log('COUNT : ' + dbResponse.lenght)
+      if (dbResponse[0] === undefined) {
+        dbResponse = 0
+        //errorMessage.error = JSON.stringify(req.body);
+        //return res.status(status.notfound).send(errorMessage);
+      }
+      
       successMessage.registros = dbResponse.length;
       successMessage.data = dbResponse;
      
@@ -266,6 +302,7 @@ const {
     }
   };
 
+
   const filtroDependente = async (req, res) => {
     
     const filters = req.body
@@ -275,7 +312,7 @@ const {
    //departamento,secao,grupo,subgrupo,produto,fornecedor
    
    const strQuery = `
-      select * from pricing_bigbox.filtro_dependente(${req.body.departamento},${req.body.secao},${req.body.grupo},${req.body.sub_grupo},${req.body.produto},${req.body.fornecedor})`
+      select * from pricing_bigbox.filtro_dependente(${req.body.departamento},${req.body.secao},${req.body.grupo},${req.body.sub_grupo},${req.body.produto},${req.body.fornecedor},${req.body.bandeira},${req.body.cluster})`
     try {
       
       const { rows } = await dbQuery.query(strQuery);
@@ -327,6 +364,93 @@ const {
     }
   };
 
+  // atualiza os preços editados pelo usuario
+  const updateNovoPreco = async (req, res) => {
+    
+    var cluster = req.body.cluster
+    var cod_pai = req.body.codigo_pai
+    var analisado = req.body.analisado
+    var exportado = req.body.exportado
+    var preco_decisao = req.body.preco_decisao
+    var user = req.body.uid
+
+    const strQuery = `select pricing_bigbox.update_preco_decisao('${cod_pai}', '${analisado}', '${exportado}', '${preco_decisao}','${cluster}','${user}');`
+    
+    try {
+       const { rows } = await dbQuery.query(strQuery);
+      //console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Erro na gravação de dados de novo preço';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.registros = dbResponse.length;
+      successMessage.data = dbResponse;
+      
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+
+  const getItensEditadosByUserId = async (req, res) => {
+    
+   const strQuery = `SELECT * FROM pricing_bigbox.tratar_dados_gestao_preco where analizado = 1 and id_user = ${req.body.uid}`
+    try {
+      
+      const { rows } = await dbQuery.query(strQuery);
+      //console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Não Existem Itens Analisados...';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+  const getPesquisasByPai = async (req, res) => {
+    var pagina, page_items
+    
+    var cluster = req.body.cluster
+    var cod_pai = req.body.codigo_pai
+    var tipo_concorrente = req.body.tipo_concorrente
+    //pagina=req.params.pagina 
+    //var offs = (pagina -1)*page_items
+    const strQuery = `select * from pricing_bigbox.pesquisas_codigo_pai('${cod_pai}', '${cluster}','${tipo_concorrente}');`
+    
+    try {
+       const { rows } = await dbQuery.query(strQuery);
+      //console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Não Existem pesquisas para este item';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.registros = dbResponse.length;
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
   module.exports = {getAllFilters, 
                     getLojasNoCluster,
                     getDadosGestaoPrecos,
@@ -336,6 +460,10 @@ const {
                     getGestaoTotalizadores,
                     filterTable,
                     filterTablePaisFilhos,
+                    filterTableItensProporcionais,
                     filtroDependente,
-                    getFilhosByPaiProporcional
+                    getFilhosByPaiProporcional,
+                    updateNovoPreco,
+                    getItensEditadosByUserId,
+                    getPesquisasByPai
                     }
