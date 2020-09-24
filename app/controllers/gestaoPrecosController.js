@@ -275,7 +275,7 @@ const {
    //departamento,secao,grupo,subgrupo,produto,fornecedor
    
    const strQuery = `
-      select * from pricing_bigbox.filtro_dependente2(${req.body.departamento},${req.body.secao},${req.body.grupo},${req.body.sub_grupo},${req.body.produto},${req.body.fornecedor})`
+      select * from pricing_bigbox.filtro_dependente(${req.body.departamento},${req.body.secao},${req.body.grupo},${req.body.sub_grupo},${req.body.produto},${req.body.fornecedor})`
     try {
       
       const { rows } = await dbQuery.query(strQuery);

@@ -4,6 +4,7 @@ var env = require('./env');
 var usersRoute = require('./app/routes/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
 var appController = require('./app/controllers/appController');
+var path = require('path');
 //var uploadRoute = require('./app/routes/uploadRoute');
 //var adminRoute = require('./app/routes/adminRoute');
 
@@ -18,6 +19,9 @@ app.use(express.json());
 
 // set the view engine to ejs
 app.set('view engine', 'ejs');
+
+// set the public folder
+app.use('/static', express.static(path.join(__dirname, 'public')))
 
 // index page 
 app.get('/', function(req, res) {
