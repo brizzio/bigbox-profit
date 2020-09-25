@@ -14,6 +14,7 @@ var { getAllFilters,
       getFilhosByPaiProporcional,
       updateNovoPreco,
       getItensEditadosByUserId,
+      resetItensEditadosByUserId,
       getPesquisasByPai} = require('../controllers/gestaoPrecosController');
 //var verifyAuth = require('../middlewares/verifyAuth');
 
@@ -83,6 +84,12 @@ router.post('/gestao/update', updateNovoPreco);
 // 
 // uid: id do usuario
 router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId);
+
+//elimina os itens alterados pelo usuario da lista de itens alterados
+// postando o seguinte objeto no body
+// 
+// uid: id do usuario
+router.post('/gestao/update/reset-editados', resetItensEditadosByUserId);
 
 module.exports = router;
 

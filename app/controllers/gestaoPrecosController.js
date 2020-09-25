@@ -374,7 +374,7 @@ const {
     var preco_decisao = req.body.preco_decisao
     var user = req.body.uid
 
-    const strQuery = `select pricing_bigbox.update_preco_decisao('${cod_pai}', '${analisado}', '${exportado}', '${preco_decisao}','${cluster}','${user}');`
+    const strQuery = `select pricing_bigbox.update_preco_decisao(${cod_pai}, ${analisado}, ${exportado}, ${preco_decisao},${cluster},${user});`
     
     try {
        const { rows } = await dbQuery.query(strQuery);
@@ -412,6 +412,7 @@ const {
         return res.status(status.notfound).send(errorMessage);
       }
       
+      successMessage.registros = dbResponse.length;
       successMessage.data = dbResponse;
      
       return res.status(status.success).send(successMessage);
@@ -420,6 +421,30 @@ const {
       return res.status(status.error).send(errorMessage);
     }
   };
+
+  const resetItensEditadosByUserId = async (req, res) => {
+    
+    const strQuery = `select pricing_bigbox.reset_parametros_update (${req.body.uid})`
+     try {
+       
+       const { rows } = await dbQuery.query(strQuery);
+       //console.log(JSON.stringify(rows))
+ 
+       const dbResponse = rows;
+       if (dbResponse[0] === undefined) {
+         errorMessage.error = 'Não encontramos itens analizados para o usuario ' + req.body.uid + '...';
+         return res.status(status.notfound).send(errorMessage);
+       }
+       
+       successMessage.registros = dbResponse.length;
+       successMessage.data = dbResponse;
+      
+       return res.status(status.success).send(successMessage);
+     } catch (error) {
+       errorMessage.error = JSON.stringify(error);
+       return res.status(status.error).send(errorMessage);
+     }
+   };
 
   const getPesquisasByPai = async (req, res) => {
     var pagina, page_items
@@ -465,5 +490,6 @@ const {
                     getFilhosByPaiProporcional,
                     updateNovoPreco,
                     getItensEditadosByUserId,
+                    resetItensEditadosByUserId,
                     getPesquisasByPai
                     }
