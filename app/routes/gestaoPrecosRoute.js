@@ -7,16 +7,22 @@ var { getAllFilters,
       getGeoLojas,
       getGeoConcorrentes,
       getGestaoTotalizadores,
+      getTotalizadoresParaItensEditados,
       filterTable,
       filterTablePaisFilhos,
       filterTableItensProporcionais,
       filtroDependente,
       getFilhosByPaiProporcional,
       updateNovoPreco,
+      updateCheckboxMultiploOnClick,
       getItensEditadosByUserId,
       resetItensEditadosByUserId,
-      getPesquisasByPai} = require('../controllers/gestaoPrecosController');
-//var verifyAuth = require('../middlewares/verifyAuth');
+      resetItensExportadosByUserId,
+      getPesquisasByPai,
+      exportaItens,
+      getItensExportadosParaEnvio} = require('../controllers/gestaoPrecosController');
+
+var { verifyAPIToken } = require('../middlewares/verifyAuth');
 
 const router = express.Router();
 
@@ -31,8 +37,11 @@ router.get('/lojas/:cluster', getLojasNoCluster);
 //Retorna os dados da gestão de precos com paginacao
 router.get('/gestao/tabela', getTabelaGestaoPrecos);
 
-//Retorna os totais da gestão de precos com paginacao
+//Retorna os totais da gestão de precos para um determinado filtro
 router.post('/gestao/totalizadores', getGestaoTotalizadores);
+
+//Retorna os totais da gestão de precos para os itens analisados e prestes a serem exportados
+router.post('/gestao/totalizadores-editados', getTotalizadoresParaItensEditados);
 
 //Retorna os dados da gestão de precos com paginacao
 router.get('/gestao/:itensPorPagina/:pagina', getDadosGestaoPrecos);
@@ -79,6 +88,9 @@ router.post('/gestao/filtro-dependentes', filtroDependente);
 // uid: id do usuario
 router.post('/gestao/update', updateNovoPreco);
 
+router.post('/gestao/update/checkboxes', updateCheckboxMultiploOnClick);
+
+
 //recupera os itens alterados pelo usuario
 // postando o seguinte objeto no body
 // 
@@ -90,6 +102,19 @@ router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId);
 // 
 // uid: id do usuario
 router.post('/gestao/update/reset-editados', resetItensEditadosByUserId);
+
+//rota que atualiza a coluna exportado na tabela tratar_dados_gestao_preco
+router.post('/gestao/export', exportaItens);
+
+//elimina a lista de exportacao do usuario mantendo a lista de itens alterados
+// postando o seguinte objeto no body
+// uid: id do usuario
+router.post('/gestao/export/reset', resetItensExportadosByUserId);
+
+//Rota autenticada para exportação LUMI
+
+router.get('/pricing/precoService/receber', verifyAPIToken, getItensExportadosParaEnvio);
+
 
 module.exports = router;
 

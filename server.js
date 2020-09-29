@@ -5,6 +5,7 @@ var usersRoute = require('./app/routes/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
 var appController = require('./app/controllers/appController');
 var path = require('path');
+var jwt = require('jsonwebtoken');
 //var uploadRoute = require('./app/routes/uploadRoute');
 //var adminRoute = require('./app/routes/adminRoute');
 
@@ -33,6 +34,29 @@ app.get('/', function(req, res) {
 app.get('/about', function(req, res) {
   var page = {title:'ABOUT'}
   res.render('pages/about',{page:page});
+});
+
+// jwt page 
+app.get('/jwt', function(req, res) {
+  
+    // Create a new token with the username in the payload
+    // and which expires 300 seconds after issue
+    const jwtExpirySeconds = 300
+
+    var obj = {
+      id:'171',
+      user:'BIG BOX'
+    }
+
+    const token = jwt.sign({ obj }, env.API_SECRET, {
+      algorithm: "HS256",
+      //expiresIn: jwtExpirySeconds,
+      expiresIn: '100 years'
+    })
+    console.log("token:", token)
+    res.send({token:token});
+
+  
 });
 
 //ROTAS DO APLICATIVO

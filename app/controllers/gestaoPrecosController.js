@@ -153,6 +153,29 @@ const {
     }
   };
 
+  const getTotalizadoresParaItensEditados = async (req, res) => {
+    
+    const strQuery = `select * from pricing_bigbox.filtro_multiplo_totalizador_editados()`
+    
+    try {
+      
+      const { rows } = await dbQuery.query(strQuery);
+      //console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Não Existem Itens editados para totalizar';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
 
 
 
@@ -397,6 +420,32 @@ const {
     }
   };
 
+  // atualiza o checkbox multiplo para todos os itens de um filtro de pais proporcionais
+  const updateCheckboxMultiploOnClick = async (req, res) => {
+  
+    const strQuery = `select * from pricing_bigbox.update_checkbox_multiplo (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao},${req.body.analisado},${req.body.uid});`
+    
+    try {
+       const { rows } = await dbQuery.query(strQuery);
+      //console.log(JSON.stringify(rows))
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = 'Erro na gravação de dados do checkbox multiplo';
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.registros = dbResponse.length;
+      successMessage.data = dbResponse;
+      
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
 
   const getItensEditadosByUserId = async (req, res) => {
     
@@ -476,6 +525,94 @@ const {
     }
   };
 
+
+  //-----------------------------------------------------------------------
+  //exporta itens
+
+  // atualiza o checkbox multiplo para todos os itens de um filtro de pais proporcionais
+const exportaItens = async (req, res) => {
+  
+  const strQuery = `select * from pricing_bigbox.exporta_itens (${req.body.uid},${req.body.data});`
+  
+  try {
+     const { rows } = await dbQuery.query(strQuery);
+    //console.log(JSON.stringify(rows))
+
+    const dbResponse = rows;
+    if (dbResponse[0] === undefined) {
+      errorMessage.error = 'Erro na gravação de dados de exportação';
+      return res.status(status.notfound).send(errorMessage);
+    }
+    
+    successMessage.registros = dbResponse.length;
+    successMessage.data = dbResponse;
+    
+   
+    return res.status(status.success).send(successMessage);
+  } catch (error) {
+    errorMessage.error = JSON.stringify(error);
+    return res.status(status.error).send(errorMessage);
+  }
+};
+
+const resetItensExportadosByUserId = async (req, res) => {
+    
+  const strQuery = `select pricing_bigbox.reset_parametros_exportacao (${req.body.uid})`
+   try {
+     
+     const { rows } = await dbQuery.query(strQuery);
+     //console.log(JSON.stringify(rows))
+
+     const dbResponse = rows;
+     if (dbResponse[0] === undefined) {
+       errorMessage.error = 'Não encontramos itens exportados para o usuario ' + req.body.uid + '...';
+       return res.status(status.notfound).send(errorMessage);
+     }
+     
+     successMessage.registros = dbResponse.length;
+     successMessage.data = dbResponse;
+    
+     return res.status(status.success).send(successMessage);
+   } catch (error) {
+     errorMessage.error = JSON.stringify(error);
+     return res.status(status.error).send(errorMessage);
+   }
+ };
+
+ const getItensExportadosParaEnvio = async (req, res) => {
+    
+  console.log('id: ' + req.api_client.id)
+ 
+  const strQuery = `select * from pricing_bigbox.retorno_api_pricing()`
+  
+   try {
+    console.log((!req.api_client.id === 171))
+    if (!req.api_client.id === 171){
+      errorMessage.error = 'Este usuario nao tem acesso a essa informação';
+      return res.status(status.bad).send(req.api_client.id === 171);
+    }
+     
+     const { rows } = await dbQuery.query(strQuery);
+     console.log(JSON.stringify(rows))
+
+     const dbResponse = rows;
+     if (dbResponse[0] === undefined) {
+       errorMessage.error = 'Não Existem Itens Para Exportação';
+      return res.status(status.notfound).send(errorMessage);
+     }
+     
+     successMessage.registros = dbResponse.length;
+     successMessage.Items = dbResponse;
+    
+     return res.status(status.success).send(successMessage);
+   } catch (error) {
+     errorMessage.error = JSON.stringify(error);
+     return res.status(status.error).send(errorMessage);
+   }
+ };
+
+
+
   module.exports = {getAllFilters, 
                     getLojasNoCluster,
                     getDadosGestaoPrecos,
@@ -483,13 +620,18 @@ const {
                     getGeoLojas,
                     getGeoConcorrentes,
                     getGestaoTotalizadores,
+                    getTotalizadoresParaItensEditados,
                     filterTable,
                     filterTablePaisFilhos,
                     filterTableItensProporcionais,
                     filtroDependente,
                     getFilhosByPaiProporcional,
                     updateNovoPreco,
+                    updateCheckboxMultiploOnClick,
                     getItensEditadosByUserId,
                     resetItensEditadosByUserId,
-                    getPesquisasByPai
+                    resetItensExportadosByUserId,
+                    getPesquisasByPai,
+                    exportaItens,
+                    getItensExportadosParaEnvio
                     }
