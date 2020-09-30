@@ -3,6 +3,7 @@ var cors = require('cors')
 var env = require('./env');
 var usersRoute = require('./app/routes/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
+var lumiRoute = require('./app/routes/lumiRoute');
 var appController = require('./app/controllers/appController');
 var path = require('path');
 var jwt = require('jsonwebtoken');
@@ -74,6 +75,7 @@ app.get('/gestao-precos', async function(req, res) {
 //app.use('/api/v1', adminRoute);
 //app.use('/api/v1', tripRoute);
 app.use('/api/v1', gestaoPrecosRoute);
+app.use('/api', lumiRoute);
 //app.use('/api/v1', bookingRoute);
 
 

@@ -19,8 +19,8 @@ var { getAllFilters,
       resetItensEditadosByUserId,
       resetItensExportadosByUserId,
       getPesquisasByPai,
-      exportaItens,
-      getItensExportadosParaEnvio} = require('../controllers/gestaoPrecosController');
+      exportaItens
+      } = require('../controllers/gestaoPrecosController');
 
 var { verifyAPIToken } = require('../middlewares/verifyAuth');
 
@@ -110,10 +110,6 @@ router.post('/gestao/export', exportaItens);
 // postando o seguinte objeto no body
 // uid: id do usuario
 router.post('/gestao/export/reset', resetItensExportadosByUserId);
-
-//Rota autenticada para exportação LUMI
-
-router.get('/pricing/precoService/receber', verifyAPIToken, getItensExportadosParaEnvio);
 
 
 module.exports = router;
