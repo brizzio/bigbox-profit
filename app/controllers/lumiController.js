@@ -37,8 +37,9 @@ const {
 
      const dbResponse = rows;
      if (dbResponse[0] === undefined) {
-       errorMessage.error = 'Não Existem Itens Para Exportação';
-      return res.status(status.notfound).send(errorMessage);
+        var msg = {}
+        msg.Items = [];
+        return res.status(status.success).send(msg);
      }
      
      successMessage.registros = dbResponse.length;
