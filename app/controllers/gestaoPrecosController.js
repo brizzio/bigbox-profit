@@ -231,18 +231,30 @@ const {
   const filterTable = async (req, res) => {
     
     const filters = req.body
-    console.log(req.body)
+    //console.log(req.body)
    
     var page_items= parseInt(req.body.registros.replace("'","")) 
     var pagina = parseInt(req.body.pagina.replace("'",""))
     var offs = (pagina -1) * page_items
 
-   const strQuery = `
+    const strQuery = `
       select * from pricing_bigbox.filtro_multiplo_pais_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) offset ${offs} limit ${page_items};`
+
+    const strQueryCount = `
+      select count(*) from pricing_bigbox.filtro_multiplo_pais_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao});`      
+    
     try {
       
+      if (pagina == 1){
+      const countSelect = await dbQuery.query(strQueryCount);
+      //console.log(JSON.stringify('contagem ===> ' + rows))
+      var reg = countSelect.rows[0].count
+      successMessage.registros = reg;
+      successMessage.paginas = Math.ceil(reg / page_items)
+      }
+
       const { rows } = await dbQuery.query(strQuery);
-      //console.log(JSON.stringify(rows))
+      
 
       const dbResponse = rows;
       if (dbResponse[0] === undefined) {
@@ -250,6 +262,7 @@ const {
         return res.status(status.notfound).send(errorMessage);
       }
       
+      successMessage.pagina = pagina
       successMessage.start_at = offs + 1;
       successMessage.end_at = offs + page_items+1;
       successMessage.data = dbResponse;
@@ -272,10 +285,23 @@ const {
    
    const strQuery = `
       select * from pricing_bigbox.filtro_multiplo_gestao_preco_paifilho (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) offset ${offs} limit ${page_items};`
-    try {
+    
+   const strQueryCount = `
+      select count(*) from pricing_bigbox.filtro_multiplo_gestao_preco_paifilho (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao});`
+            
+  try {
+      
+    if (pagina == 1){
+      const countSelect = await dbQuery.query(strQueryCount);
+      //console.log(JSON.stringify('contagem ===> ' + rows))
+      var reg = countSelect.rows[0].count
+      successMessage.registros = reg;
+      successMessage.paginas = Math.ceil(reg / page_items)
+    }
+
       
       const { rows } = await dbQuery.query(strQuery);
-      console.log(rows)
+      //console.log(rows)
 
       const dbResponse = rows;
       //console.log('COUNT : ' + dbResponse.lenght)
@@ -284,6 +310,7 @@ const {
         return res.status(status.notfound).send(errorMessage);
       }
       
+      successMessage.pagina = pagina
       successMessage.start_at = offs + 1;
       successMessage.end_at = offs + page_items+1;
       successMessage.data = dbResponse;
@@ -297,24 +324,38 @@ const {
 
   const filterTableItensProporcionais = async (req, res) => {
     
-    const filters = req.body
-    console.log(req.body)
+    var page_items= parseInt(req.body.registros.replace("'","")) 
+    var pagina = parseInt(req.body.pagina.replace("'",""))
+    var offs = (pagina -1) * page_items
    
    const strQuery = `
-      select * from pricing_bigbox.filtro_multiplo_itens_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao})`
+      select * from pricing_bigbox.filtro_multiplo_itens_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao})offset ${offs} limit ${page_items};`
+
+   const strQueryCount = `
+      select count(*) from pricing_bigbox.filtro_multiplo_itens_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao})`   
+
     try {
       
+      if (pagina == 1){
+        const countSelect = await dbQuery.query(strQueryCount);
+        //console.log(JSON.stringify('contagem ===> ' + rows))
+        var reg = countSelect.rows[0].count
+        successMessage.registros = reg;
+        successMessage.paginas = Math.ceil(reg / page_items)
+      }
+  
       const { rows } = await dbQuery.query(strQuery);
       console.log(rows)
 
       const dbResponse = rows;
       //console.log('COUNT : ' + dbResponse.lenght)
       if (dbResponse[0] === undefined) {
-        dbResponse = 0
-        //errorMessage.error = JSON.stringify(req.body);
-        //return res.status(status.notfound).send(errorMessage);
+        var msg = {}
+        msg.data = [];
+        return res.status(status.success).send(msg);
       }
       
+      successMessage.pagina = pagina
       successMessage.registros = dbResponse.length;
       successMessage.data = dbResponse;
      
@@ -582,7 +623,32 @@ const resetItensExportadosByUserId = async (req, res) => {
    }
  };
 
- 
+ const getItensExportadosByUserId = async (req, res) => {
+    
+  const strQuery = `SELECT * FROM pricing_bigbox.tratar_dados_gestao_preco where exportado = 1 and id_user = ${req.body.uid}`
+   try {
+     
+     const { rows } = await dbQuery.query(strQuery);
+     //console.log(JSON.stringify(rows))
+
+     const dbResponse = rows;
+     if (dbResponse[0] === undefined) {
+       
+       var msg = {}
+       msg.data = [];
+       console.log('passou aqui...' + msg.data)
+       return res.status(status.success).send(msg);
+     }
+     
+     successMessage.registros = dbResponse.length;
+     successMessage.data = dbResponse;
+    
+     return res.status(status.success).send(successMessage);
+   } catch (error) {
+     errorMessage.error = JSON.stringify(error);
+     return res.status(status.error).send(errorMessage);
+   }
+ };
 
 
 
@@ -604,6 +670,7 @@ const resetItensExportadosByUserId = async (req, res) => {
                     getItensEditadosByUserId,
                     resetItensEditadosByUserId,
                     resetItensExportadosByUserId,
+                    getItensExportadosByUserId,
                     getPesquisasByPai,
                     exportaItens
   }

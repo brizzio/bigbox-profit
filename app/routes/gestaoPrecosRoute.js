@@ -18,6 +18,7 @@ var { getAllFilters,
       getItensEditadosByUserId,
       resetItensEditadosByUserId,
       resetItensExportadosByUserId,
+      getItensExportadosByUserId,
       getPesquisasByPai,
       exportaItens
       } = require('../controllers/gestaoPrecosController');
@@ -103,6 +104,13 @@ router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId);
 // uid: id do usuario
 router.post('/gestao/update/reset-editados', resetItensEditadosByUserId);
 
+//recupera os itens exportados pelo usuario
+// postando o seguinte objeto no body
+// uid: id do usuario
+router.post('/gestao/update/lista-itens-exportados', getItensExportadosByUserId);
+
+
+
 //rota que atualiza a coluna exportado na tabela tratar_dados_gestao_preco
 router.post('/gestao/export', exportaItens);
 
@@ -110,6 +118,7 @@ router.post('/gestao/export', exportaItens);
 // postando o seguinte objeto no body
 // uid: id do usuario
 router.post('/gestao/export/reset', resetItensExportadosByUserId);
+
 
 
 module.exports = router;
