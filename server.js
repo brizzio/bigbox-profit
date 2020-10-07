@@ -26,9 +26,18 @@ app.set('view engine', 'ejs');
 app.use('/static', express.static(path.join(__dirname, 'public')))
 
 // index page 
+// app.get('/', function(req, res) {
+//   var page = {title:'HOME'}
+//   res.render('pages/index', {page:page});
+// });
+
+// index page 
 app.get('/', function(req, res) {
-  var page = {title:'HOME'}
-  res.render('pages/index', {page:page});
+  res.status(200).send(
+    {client:'BIG BOX',
+    operator:'PRICEPOINT',
+    status:'SUCESSO'
+})
 });
 
 // about page 

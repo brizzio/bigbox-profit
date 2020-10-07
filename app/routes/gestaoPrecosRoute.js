@@ -20,7 +20,8 @@ var { getAllFilters,
       resetItensExportadosByUserId,
       getItensExportadosByUserId,
       getPesquisasByPai,
-      exportaItens
+      exportaItens,
+      filterByDiferencaTotal 
       } = require('../controllers/gestaoPrecosController');
 
 var { verifyAPIToken } = require('../middlewares/verifyAuth');
@@ -118,6 +119,9 @@ router.post('/gestao/export', exportaItens);
 // postando o seguinte objeto no body
 // uid: id do usuario
 router.post('/gestao/export/reset', resetItensExportadosByUserId);
+
+//filtra a tabela gestão de precos e retorna registros filtrados
+router.post('/gestao/classificador/diferenca-total', filterByDiferencaTotal);
 
 
 

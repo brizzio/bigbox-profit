@@ -228,6 +228,69 @@ const {
     }
   };
 
+  const filterByDiferencaTotal = async (req, res) => {
+    
+    const db_function = ''
+    var view = parseInt(req.body.radio.replace("'","")) 
+    var page_items= parseInt(req.body.registros.replace("'","")) 
+    var pagina = parseInt(req.body.pagina.replace("'",""))
+    var offs = (pagina -1) * page_items
+
+    switch (view) {
+      case 1:
+        db_function= "filtro_multiplo_gestao_preco_paifilho";
+        break;
+      case 2:
+        db_function = "filtro_multiplo_itens_proporcionais";
+        break;
+      default:
+        db_function = "filtro_multiplo_pais_proporcionais";
+    }
+
+
+    const strQuery = `
+      select * from pricing_bigbox.${db_function} (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) order by diferenca_total::numeric desc offset ${offs} limit ${page_items};`
+
+    const strQueryCount = `
+      select count(*) from pricing_bigbox.${db_function} (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao});`      
+    
+    try {
+      
+      if (pagina == 1){
+      const countSelect = await dbQuery.query(strQueryCount);
+      //console.log(JSON.stringify('contagem ===> ' + rows))
+      var reg = countSelect.rows[0].count
+      successMessage.registros = reg;
+      successMessage.paginas = Math.ceil(reg / page_items)
+      }
+
+      const { rows } = await dbQuery.query(strQuery);
+      
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = JSON.stringify(req.body);
+        return res.status(status.notfound).send(errorMessage);
+      }
+      
+      successMessage.pagina = pagina
+      successMessage.start_at = offs + 1;
+      successMessage.end_at = offs + page_items+1;
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
+
+
+
+
+
+
+
   const filterTable = async (req, res) => {
     
     const filters = req.body
@@ -489,10 +552,27 @@ const {
 
 
   const getItensEditadosByUserId = async (req, res) => {
-    
-   const strQuery = `SELECT * FROM pricing_bigbox.tratar_dados_gestao_preco where analizado = 1 and id_user = ${req.body.uid}`
+  
+    var page_items= parseInt(req.body.registros.replace("'","")) 
+    var pagina = parseInt(req.body.pagina.replace("'",""))
+    var offs = (pagina -1) * page_items
+
+
+   const strQuery = `select * from pricing_bigbox.lista_itens_editados(${req.body.uid}) offset ${offs} limit ${page_items}`
+
+   const strQueryCount = `select count(*) from pricing_bigbox.lista_itens_editados(${req.body.uid})`
+
+
     try {
       
+      if (pagina == 1){
+        const countSelect = await dbQuery.query(strQueryCount);
+        var reg = countSelect.rows[0].count
+        console.log('contagem ===> ' + reg)
+        successMessage.registros = reg;
+        successMessage.paginas = Math.ceil(reg / page_items)
+      }
+
       const { rows } = await dbQuery.query(strQuery);
       //console.log(JSON.stringify(rows))
 
@@ -501,11 +581,14 @@ const {
         
         var msg = {}
         msg.data = [];
-        console.log('passou aqui...' + msg.data)
+        //console.log('passou aqui...' + msg.data)
         return res.status(status.success).send(msg);
       }
       
-      successMessage.registros = dbResponse.length;
+      successMessage.pagina = pagina
+      successMessage.start_at = offs + 1;
+      successMessage.end_at = successMessage.registros < page_items ? successMessage.registros : offs + page_items+1;
+      
       successMessage.data = dbResponse;
      
       return res.status(status.success).send(successMessage);
@@ -624,9 +707,25 @@ const resetItensExportadosByUserId = async (req, res) => {
  };
 
  const getItensExportadosByUserId = async (req, res) => {
+
+  var page_items= parseInt(req.body.registros.replace("'","")) 
+  var pagina = parseInt(req.body.pagina.replace("'",""))
+  var offs = (pagina -1) * page_items
+
     
-  const strQuery = `SELECT * FROM pricing_bigbox.tratar_dados_gestao_preco where exportado = 1 and id_user = ${req.body.uid}`
+  const strQuery = `select * from pricing_bigbox.lista_itens_exportados(${req.body.uid}) offset ${offs} limit ${page_items}`
+
+  const strQueryCount = `select count(*) from pricing_bigbox.lista_itens_exportados(${req.body.uid})`  
+
    try {
+
+    if (pagina == 1){
+      const countSelect = await dbQuery.query(strQueryCount);
+      var reg = countSelect.rows[0].count
+      console.log('contagem ===> ' + reg)
+      successMessage.registros = reg;
+      successMessage.paginas = Math.ceil(reg / page_items)
+    }
      
      const { rows } = await dbQuery.query(strQuery);
      //console.log(JSON.stringify(rows))
@@ -636,11 +735,12 @@ const resetItensExportadosByUserId = async (req, res) => {
        
        var msg = {}
        msg.data = [];
-       console.log('passou aqui...' + msg.data)
        return res.status(status.success).send(msg);
      }
      
-     successMessage.registros = dbResponse.length;
+     successMessage.pagina = pagina
+     successMessage.start_at = offs + 1;
+     successMessage.end_at = successMessage.registros < page_items ? successMessage.registros : offs + page_items+1;
      successMessage.data = dbResponse;
     
      return res.status(status.success).send(successMessage);
@@ -672,5 +772,6 @@ const resetItensExportadosByUserId = async (req, res) => {
                     resetItensExportadosByUserId,
                     getItensExportadosByUserId,
                     getPesquisasByPai,
-                    exportaItens
+                    exportaItens,
+                    filterByDiferencaTotal 
   }
