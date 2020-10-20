@@ -1,5 +1,5 @@
-const successMessage = { status: 'success' };
-const errorMessage = { status: 'error' };
+var successMessage = { status: 'success' };
+var errorMessage = { status: 'error' };
 const status = {
   success: 200,
   error: 500,
@@ -15,7 +15,7 @@ const trip_statuses = {
   active: 1.00,
   cancelled: 2.00,
 }
-const uploadSuccessMessage = { status: 'success' , message: "Arquivo lido e transferido para o servidor com sucesso!"};
+var uploadSuccessMessage = { status: 'success' , message: "Arquivo lido e transferido para o servidor com sucesso!"};
 
 module.exports =  {
   successMessage,

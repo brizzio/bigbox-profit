@@ -21,7 +21,8 @@ var { getAllFilters,
       getItensExportadosByUserId,
       getPesquisasByPai,
       exportaItens,
-      filterByDiferencaTotal 
+      filterByDiferencaTotal,
+      filterByStringOnSearchBox 
       } = require('../controllers/gestaoPrecosController');
 
 var { verifyAPIToken } = require('../middlewares/verifyAuth');
@@ -46,7 +47,7 @@ router.post('/gestao/totalizadores', getGestaoTotalizadores);
 router.post('/gestao/totalizadores-editados', getTotalizadoresParaItensEditados);
 
 //Retorna os dados da gestão de precos com paginacao
-router.get('/gestao/:itensPorPagina/:pagina', getDadosGestaoPrecos);
+//router.get('/gestao/:itensPorPagina/:pagina', getDadosGestaoPrecos);
 
 //rotas para dados de geolocalização e referencia geografica /api/v1/geo/lojas
 router.get('/geo/lojas', getGeoLojas);
@@ -123,7 +124,8 @@ router.post('/gestao/export/reset', resetItensExportadosByUserId);
 //filtra a tabela gestão de precos e retorna registros filtrados
 router.post('/gestao/classificador/diferenca-total', filterByDiferencaTotal);
 
-
+//filtra a tabela gestão de precos pelo texto no checkbox
+router.get('/gestao/search/:texto', filterByStringOnSearchBox);
 
 module.exports = router;
 

@@ -228,40 +228,57 @@ const {
     }
   };
 
-  const filterByDiferencaTotal = async (req, res) => {
+  const filterByDiferencaTotalnaView = async (req, res) => {
     
-    const db_function = ''
+    var strQuery = ''
+    var strQueryCount = ''
+    var sm = {}
     var view = parseInt(req.body.radio.replace("'","")) 
     var page_items= parseInt(req.body.registros.replace("'","")) 
     var pagina = parseInt(req.body.pagina.replace("'",""))
     var offs = (pagina -1) * page_items
+    console.log('mia ====> ' + req.body.maioriguala * 1)
+
+    var maior_i_a = parseInt(req.body.maioriguala.replace("'",""));
+    maior_i_a = maior_i_a === 0 ? -9999999 : maior_i_a;
+
+    var menor_i_a  = parseInt(req.body.menoriguala.replace("'",""));
+    menor_i_a  = menor_i_a  === 0 ? 9999999 : menor_i_a * -1;
+
+
+    var filtro = 'where diferenca_total >= ' + maior_i_a + ' and diferenca_total <= ' + menor_i_a
 
     switch (view) {
       case 1:
-        db_function= "filtro_multiplo_gestao_preco_paifilho";
+        strQuery = `select * from pricing_bigbox.filtro_multiplo_gestao_preco_paifilho(${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro} order by diferenca_total desc offset ${offs} limit ${page_items};`
+
+        strQueryCount = `select count(*) from pricing_bigbox.filtro_multiplo_gestao_preco_paifilho (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro};`
+        
         break;
+
       case 2:
-        db_function = "filtro_multiplo_itens_proporcionais";
+        //db_function = 'filtro_multiplo_itens_proporcionais';
+        strQuery = `select * from pricing_bigbox.filtro_multiplo_itens_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro} order by diferenca_total desc offset ${offs} limit ${page_items};`
+
+        strQueryCount = `select count(*) from pricing_bigbox.filtro_multiplo_itens_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro};`
+
         break;
       default:
-        db_function = "filtro_multiplo_pais_proporcionais";
+        //db_function = 'filtro_multiplo_pais_proporcionais';
+        strQuery = `select * from pricing_bigbox.filtro_multiplo_pais_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro} order by diferenca_total desc offset ${offs} limit ${page_items};`
+
+        strQueryCount = `select count(*) from pricing_bigbox.filtro_multiplo_pais_proporcionais (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro};`
     }
 
-
-    const strQuery = `
-      select * from pricing_bigbox.${db_function} (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) order by diferenca_total::numeric desc offset ${offs} limit ${page_items};`
-
-    const strQueryCount = `
-      select count(*) from pricing_bigbox.${db_function} (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao});`      
+       
     
-    try {
-      
+      try {
+        console.log(JSON.stringify('query ===> ' + strQueryCount))
       if (pagina == 1){
       const countSelect = await dbQuery.query(strQueryCount);
-      //console.log(JSON.stringify('contagem ===> ' + rows))
       var reg = countSelect.rows[0].count
-      successMessage.registros = reg;
-      successMessage.paginas = Math.ceil(reg / page_items)
+      sm.registros = reg;
+      sm.paginas = Math.ceil(reg / page_items)
       }
 
       const { rows } = await dbQuery.query(strQuery);
@@ -270,22 +287,78 @@ const {
       const dbResponse = rows;
       if (dbResponse[0] === undefined) {
         errorMessage.error = JSON.stringify(req.body);
-        return res.status(status.notfound).send(errorMessage);
+       return res.status(status.notfound).send(errorMessage);
       }
       
-      successMessage.pagina = pagina
-      successMessage.start_at = offs + 1;
-      successMessage.end_at = offs + page_items+1;
-      successMessage.data = dbResponse;
+      sm.pagina = pagina
+      sm.start_at = offs + 1;
+      sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+      sm.data = dbResponse;
      
-      return res.status(status.success).send(successMessage);
+      return res.status(status.success).send(sm);
     } catch (error) {
       errorMessage.error = JSON.stringify(error);
       return res.status(status.error).send(errorMessage);
     }
   };
 
+  const filterByDiferencaTotal = async (req, res) => {
+    
+    var strQuery = ''
+    var strQueryCount = ''
+    var filtro = ''
+    var ordem = ''
+    var sm = {}
+    var page_items= parseInt(req.body.registros.replace("'","")) 
+    var pagina = parseInt(req.body.pagina.replace("'",""))
+    var offs = (pagina -1) * page_items
+    
+    var value = parseInt(req.body.maioriguala.replace("'",""));
 
+    if(value >= 0){
+      filtro = 'where diferenca_total >= ' + value 
+      ordem = 'order by diferenca_total desc offset ' + offs +  ' limit ' + page_items
+    }else{
+      filtro = 'where diferenca_total <= ' + value
+      ordem = 'order by diferenca_total asc offset ' + offs +  ' limit ' + page_items
+    }
+   
+
+        strQuery = `select * from pricing_bigbox.filtro_extra(${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro} ${ordem};`
+
+        strQueryCount = `select count(*) from pricing_bigbox.filtro_extra (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro};`
+        
+     
+    
+      try {
+        console.log(JSON.stringify('query ===> ' + strQueryCount))
+      if (pagina == 1){
+      const countSelect = await dbQuery.query(strQueryCount);
+      var reg = countSelect.rows[0].count
+      sm.registros = reg;
+      sm.paginas = Math.ceil(reg / page_items)
+      }
+
+      const { rows } = await dbQuery.query(strQuery);
+      
+
+      const dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+        errorMessage.error = JSON.stringify(req.body);
+       return res.status(status.notfound).send(errorMessage);
+      }
+      
+      sm.pagina = pagina
+      sm.start_at = offs + 1;
+      sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+      sm.data = dbResponse;
+     
+      return res.status(status.success).send(sm);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  };
 
 
 
@@ -750,6 +823,39 @@ const resetItensExportadosByUserId = async (req, res) => {
    }
  };
 
+ 
+ //method:GET
+ const filterByStringOnSearchBox = async (req, res) => {
+ 
+ //console.log(req.params.texto)
+
+
+ var strq = `
+    select * from pricing_bigbox.filtro_search_box('${req.params.texto}');
+    `
+  try {
+    
+    var { rows } = await dbQuery.query(strq);
+    //console.log(strq)
+
+    const dbResponse = rows;
+    
+    if (dbResponse[0] === undefined) {
+      var msg = {}
+      msg.data = [];
+      return res.status(status.success).send(msg);
+    }
+    
+    successMessage.pagina = 1
+    successMessage.registros = dbResponse.length;
+    successMessage.data = dbResponse;
+   
+    return res.status(status.success).send(successMessage);
+  } catch (error) {
+    errorMessage.error = JSON.stringify(error);
+    return res.status(status.error).send(errorMessage);
+  }
+};
 
 
   module.exports = {getAllFilters, 
@@ -773,5 +879,6 @@ const resetItensExportadosByUserId = async (req, res) => {
                     getItensExportadosByUserId,
                     getPesquisasByPai,
                     exportaItens,
-                    filterByDiferencaTotal 
+                    filterByDiferencaTotal,
+                    filterByStringOnSearchBox
   }
