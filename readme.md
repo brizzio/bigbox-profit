@@ -1,3 +1,6 @@
+**remove env variables from git
+git update-index --skip-worktree env.js
+
 https://postgres.cz/wiki/Array_based_functions
 
 react datatable: https://o2xp.github.io/react-datatable/?path=/story/*
