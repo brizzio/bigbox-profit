@@ -3,6 +3,7 @@ var cors = require('cors')
 var env = require('./env');
 var usersRoute = require('./app/routes/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
+var lumiRoute = require('./app/routes/lumiRoute');
 var appController = require('./app/controllers/appController');
 //var uploadRoute = require('./app/routes/uploadRoute');
 //var adminRoute = require('./app/routes/adminRoute');
@@ -22,24 +23,27 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 
 // index page 
-app.get('/', function(req, res) {
-  var page = {title:'HOME'}
-  res.render('pages/index', {page:page});
-});
+/* app.get('/', function(req, res) {
+  res.status(200).send(
+    {client:'BIG BOX',
+    operator:'PRICEPOINT',
+    status:'SUCESSO'
+})
+}); */
 
 // about page 
-app.get('/about', function(req, res) {
+/* app.get('/about', function(req, res) {
   var page = {title:'ABOUT'}
   res.render('pages/about',{page:page});
-});
+}); */
 
 //ROTAS DO APLICATIVO
-app.get('/gestao-precos', async function(req, res) {
+/* app.get('/gestao-precos', async function(req, res) {
   var page = await appController.page()
   console.log('a pgina é...')
   console.log(JSON.stringify(page))
   res.render('pages/gestao-precos',{page:page});
-});
+}); */
 
 
 //ROTAS DA API
@@ -48,6 +52,7 @@ app.get('/gestao-precos', async function(req, res) {
 //app.use('/api/v1', adminRoute);
 //app.use('/api/v1', tripRoute);
 app.use('/api/v1', gestaoPrecosRoute);
+app.use('/api', lumiRoute);
 //app.use('/api/v1', bookingRoute);
 
 

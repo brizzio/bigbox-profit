@@ -7,5 +7,6 @@ module.exports = {
         database: 'postgres',
         password: 'pr0f1t#2020',
         port: '5432'
-    }
+    },
+    API_SECRET:'pr0f1tm415'
 }
