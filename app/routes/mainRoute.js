@@ -10,13 +10,13 @@ var {
     updateNovoPreco, //ok
     updateCheckboxMultiploOnClick, //ok
     getItensEditadosByUserId, //ok
-    getItensExportadosByUserId,
-    resetItensEditadosByUserId,
+    getItensExportadosByUserId, //ok
+    resetItensEditadosByUserId, //ok
     resetItensExportadosByUserId,
     getPesquisasByPai, //ok
-    exportaItens,
+    exportaItens, //ok
     filterByDiferencaTotal,
-    filterByStringOnSearchBox
+    filterByStringOnSearchBox //ok
     } = require('../controllers/mainController'); 
 
 const { verifyAPIToken }  = require('../middlewares/verifyApiAuth');
@@ -86,30 +86,34 @@ router.post('/gestao/update/checkboxes', updateCheckboxMultiploOnClick);
 */
 router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId);
 
-//elimina os itens alterados pelo usuario da lista de itens alterados
-// postando o seguinte objeto no body
-// 
-// uid: id do usuario
+/** 
+* elimina os itens alterados pelo usuario da lista de itens alterados
+*/
 router.post('/gestao/update/reset-editados', resetItensEditadosByUserId);
 
-//recupera os itens exportados pelo usuario
-// postando o seguinte objeto no body
-// uid: id do usuario
+/** 
+* recupera os itens exportados pelo usuario
+*/
 router.post('/gestao/update/lista-itens-exportados', getItensExportadosByUserId);
 
-//rota que atualiza a coluna exportado na tabela tratar_dados_gestao_preco
+/** 
+* rota que atualiza a coluna exportado na tabela tratar_dados_gestao_preco
+* exporta itens para uma determinada data 
+*/
 router.post('/gestao/export', exportaItens);
 
-//elimina a lista de exportacao do usuario mantendo a lista de itens alterados
-// postando o seguinte objeto no body
-// uid: id do usuario
+/** 
+* elimina a lista de exportacao do usuario mantendo a lista de itens alterados
+*/
 router.post('/gestao/export/reset', resetItensExportadosByUserId);
 
 //filtra a tabela gestão de precos e retorna registros filtrados
 router.post('/gestao/classificador/diferenca-total', filterByDiferencaTotal);
 
-//filtra a tabela gestão de precos pelo texto no checkbox
-router.get('/gestao/search/:texto', filterByStringOnSearchBox);
+/** 
+* filtra a tabela gestão de precos pelo texto no checkbox
+*/
+router.post('/gestao/search', filterByStringOnSearchBox);
 
 
 module.exports = router;

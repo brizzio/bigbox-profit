@@ -475,9 +475,19 @@ const {
     }
   };
 
+  /**
+  * elimina os itens alterados ( editados ) pelo usuario da lista de itens alterados
+  * @param {object} req 
+  * @param {object} res 
+  * @param {object} uid:not null
+  * @param {object} db_schema:'pricing_bigbox'
+  * @returns {string} OK
+  */
   const resetItensEditadosByUserId = async (req, res) => {
+
+    var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
     
-    const strQuery = `select pricing_bigbox.reset_parametros_update (${req.body.uid})`
+    var strQuery = `select ${schema}.reset_parametros_update (${req.body.uid})`
      try {
        
        const { rows } = await dbQuery.query(strQuery);
@@ -540,10 +550,14 @@ const {
     }
   };
 
-  //-----------------------------------------------------------------------
-  //exporta itens
-
-  // atualiza o checkbox multiplo para todos os itens de um filtro de pais proporcionais
+  /**
+  * exporta itens para uma determinada data 
+  * @param {object} req 
+  * @param {object} res 
+  * @param {object} uid:not null
+  * @param {object} db_schema:'pricing_bigbox'
+  * @returns {string} OK
+  */
 const exportaItens = async (req, res) => {
   
   const strQuery = `select * from pricing_bigbox.exporta_itens (${req.body.uid},${req.body.data});`
@@ -569,9 +583,20 @@ const exportaItens = async (req, res) => {
   }
 };
 
+/**
+  * remove itens exportados pelo usuario da lista 
+  *              ==========
+  * @param {object} req 
+  * @param {object} res 
+  * @param {object} uid:not null
+  * @param {object} db_schema:'pricing_bigbox'
+  * @returns {string} OK
+  */
 const resetItensExportadosByUserId = async (req, res) => {
+
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
     
-  const strQuery = `select pricing_bigbox.reset_parametros_exportacao (${req.body.uid})`
+  var strQuery = `select ${schema}.reset_parametros_exportacao (${req.body.uid})`
    try {
      
      const { rows } = await dbQuery.query(strQuery);
@@ -648,15 +673,23 @@ const resetItensExportadosByUserId = async (req, res) => {
    }
  };
  
- //method:GET
+ /**
+     * Recupera os itens exportados pelo usuario 
+     * @param {object} req 
+     * @param {object} res 
+     * @param {object} registros:'250'
+     * @param {object} pagina:'1'
+     * @param {object} uid:not null, id do usuario
+     * @param {object} db_schema:'pricing_bigbox'
+     * @returns {object} data
+  */
  const filterByStringOnSearchBox = async (req, res) => {
  
-  //console.log(req.params.texto)
- 
- 
-  var strq = `
-     select * from pricing_bigbox.filtro_search_box('${req.params.texto}');
-     `
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+  var texto = req.body.texto.toUpperCase()
+
+  
+  var strq = `select * from ${schema}.filtro_search_box(${texto});`
    try {
      
      var { rows } = await dbQuery.query(strq);
