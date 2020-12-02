@@ -779,6 +779,104 @@ const resetItensExportadosByUserId = async (req, res) => {
   }
 };
 
+const slidersMinMaxValues = async (req, res) => {
+    
+  var sm = {}
+  
+      
+  strQueryMinMax = `select 
+                    max(diferenca_total) as diferenca_total_maximo, 
+                    min(diferenca_total) as diferenca_total_minimo,
+                    max(novamargem) as nova_margem_maximo, 
+                    min(novamargem) as nova_margem_minimo,
+                    max(variacaonovopreco) as variacao_novo_preco_maximo, 
+                    min(variacaonovopreco) as variacao_novo_preco_minimo
+                    from pricing_bigbox.filtro_extra (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao});`
+   
+    try {
+  
+    let minMax = await dbQuery.query(strQueryMinMax);
+    
+    let values = minMax.rows[0];
+    if (values === undefined) {
+      errorMessage.error = 'Sem valores min e max para esta requisição: ===> ' + JSON.stringify(req.body);
+     return res.status(status.notfound).send(errorMessage);
+    }
+
+    console.log(values)
+
+    sm.data = values;
+   
+    return res.status(status.success).send(sm);
+  } catch (error) {
+    errorMessage.error = JSON.stringify(error);
+    return res.status(status.error).send(errorMessage);
+  }
+};
+
+const filterBySliderValue = async (req, res) => {
+    
+  var strQuery = ''
+  var strQueryCount = ''
+  var filtro = ''
+  var ordem = ''
+  var campo_slider = ''
+  var sm = {}
+
+  var num_slider = parseInt(req.body.slider.replace("'",""))
+
+  switch (num_slider) {
+    case 1:
+      campo_slider = "diferenca_total";
+      break;
+    case 2:
+      campo_slider = "novamargem";
+      break;
+    case 3:
+      campo_slider = "variacaonovopreco";
+  }
+
+  var value = parseInt(req.body.maioriguala.replace("'",""));
+
+  if(value >= 0){
+    filtro = `where ${campo_slider} >= ${value}` 
+    ordem = `order by ${campo_slider} desc`//'order by diferenca_total desc offset ' + offs +  ' limit ' + page_items
+  }else{
+    filtro = `where ${campo_slider} <= ${value}`
+    ordem = `order by ${campo_slider} asc`  //offset ' + offs +  ' limit ' + page_items
+  }
+ 
+      strQuery = `select * from pricing_bigbox.filtro_extra(${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro} ${ordem};`
+
+      strQueryCount = `select count(*) from pricing_bigbox.filtro_extra (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro};`
+  
+  
+    try {
+      console.log(JSON.stringify('query ===> ' + strQueryCount))
+    
+    const countSelect = await dbQuery.query(strQueryCount);
+    var reg = countSelect.rows[0].count
+    sm.registros = reg;
+    
+    const { rows } = await dbQuery.query(strQuery);
+    
+    const dbResponse = rows;
+    if (dbResponse[0] === undefined) {
+      errorMessage.error = JSON.stringify(req.body);
+     return res.status(status.notfound).send(errorMessage);
+    }
+    
+    sm.pagina = 1
+    sm.start_at = 1;
+    sm.end_at = sm.registros //< page_items ? sm.registros : offs + page_items+1;
+    sm.data = dbResponse;
+   
+    return res.status(status.success).send(sm);
+  } catch (error) {
+    errorMessage.error = JSON.stringify(error);
+    return res.status(status.error).send(errorMessage);
+  }
+};
 
 
 
@@ -804,5 +902,7 @@ const resetItensExportadosByUserId = async (req, res) => {
                     getPesquisasByPai,
                     exportaItens,
                     filterByDiferencaTotal,
+                    slidersMinMaxValues,
+                    filterBySliderValue,
                     filterByStringOnSearchBox
                     }
