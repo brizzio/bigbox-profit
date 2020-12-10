@@ -22,6 +22,8 @@ var { getAllFilters,
       getPesquisasByPai,
       exportaItens,
       filterByDiferencaTotal,
+      slidersMinMaxValues,
+      filterBySliderValue,
       filterByStringOnSearchBox
 } = require('../controllers/gestaoPrecosController');
 
@@ -32,7 +34,7 @@ const router = express.Router();
 // Gestão de Routes
 
 //router.post('/user', verifyAuth, createUser);
-router.get('/filters', getAllFilters);
+router.get('/filters/:db_schema', getAllFilters);
 
 //router.post('/user', verifyAuth, createUser);
 router.get('/lojas/:cluster', getLojasNoCluster);
@@ -120,6 +122,12 @@ router.post('/gestao/export/reset', resetItensExportadosByUserId);
 
 //filtra a tabela gestão de precos e retorna registros filtrados
 router.post('/gestao/classificador/diferenca-total', filterByDiferencaTotal);
+
+//retorna os valores min e max do filtro para os sliders
+router.post('/gestao/classificador/valores-min-max-sliders', slidersMinMaxValues);
+
+//filtra a tabela gestão de precos e retorna registros filtrados segundo valor no slider
+router.post('/gestao/classificador/slider-filtro', filterBySliderValue);
 
 //filtra a tabela gestão de precos pelo texto no checkbox
 router.get('/gestao/search/:texto', filterByStringOnSearchBox);

@@ -5,6 +5,7 @@ var usersRoute = require('./app/routes/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
 var lumiRoute = require('./app/routes/lumiRoute');
 var appController = require('./app/controllers/appController');
+var mainRoute = require('./app/general/main/mainRoute');
 //var uploadRoute = require('./app/routes/uploadRoute');
 //var adminRoute = require('./app/routes/adminRoute');
 
@@ -52,12 +53,13 @@ app.set('view engine', 'ejs');
 //app.use('/api/v1', adminRoute);
 //app.use('/api/v1', tripRoute);
 app.use('/api/v1', gestaoPrecosRoute);
+app.use('/api/v2', mainRoute);
 app.use('/api', lumiRoute);
 //app.use('/api/v1', bookingRoute);
 
 
 app.listen('5566').on('listening', () => {
-  console.log(`🚀 are live on port 5566`);
+  //console.log(`🚀 are live on port 5566`);
 });
 
 
