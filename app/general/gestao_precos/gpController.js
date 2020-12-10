@@ -384,10 +384,10 @@ const {
   var cluster = req.body.cluster
   var cod_pai = req.body.codigo_pai
   var tipo_concorrente = req.body.tipo_concorrente
-  //var schema = .replace(new RegExp("'", 'g'), "")
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
   //pagina=req.params.pagina 
   //var offs = (pagina -1)*page_items
-  const strQuery = `select * from pricepoint.pesquisas_codigo_pai('${cod_pai}', '${cluster}','${tipo_concorrente}','${req.body.db_schema}');`
+  const strQuery = `select * from ${schema}.pesquisas_codigo_pai(${cod_pai}, ${cluster},${tipo_concorrente});`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
@@ -756,7 +756,7 @@ const resetItensExportadosByUserId = async (req, res) => {
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
   var texto = req.body.texto.toUpperCase()
 
-  var strq = `select * from pricepoint.filtro_search_box(null,null,null,null,null,null,null,null,null,null,'${schema}',null,0,0,0,0,null,${texto});`
+  var strq = `select * from pricepoint.filtro_search_box(null,null,null,null,null,null,null,null,null,null,${req.body.db_schema},null,0,0,0,0,null,${texto});`
    
   try {
      
