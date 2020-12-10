@@ -37,8 +37,7 @@ const {
   
   let calledRoute = req.originalUrl.match('^[^?]*')[0].split('/').slice(1)
   let tabela = calledRoute.slice(-1).toString().replace(new RegExp("'", 'g'), "").replace(new RegExp("-", 'g'), "_")
-  console.log(req.originalUrl,tabela)
-
+ 
 
   switch (tabela) {
     case 'totalizadores_dash':
@@ -49,15 +48,11 @@ const {
       strQuery = `select * from ${schema}.${tabela};`;
   }
 
-  
-  console.log(strQuery)
-
   try {
     
     result = await dbQuery.query(strQuery);
     
-    console.log(JSON.stringify(result.rows[0]))
-    console.log(result.rows[0] === undefined)
+    
     
     if (result.rows[0] === undefined) {
       r.status='error'
@@ -70,7 +65,8 @@ const {
 
     r.status='success'
     r.data = result.rows;
-    console.log(JSON.stringify(r))
+    r.log = req.log;
+    
    
     return res.status(status.success).send(r);
   
