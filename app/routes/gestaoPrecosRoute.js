@@ -27,9 +27,9 @@ var { getAllFilters,
       filterByStringOnSearchBox
 } = require('../controllers/gestaoPrecosController');
 
-//var verifyAuth = require('../middlewares/verifyAuth');
+//var verifyAuth = require('../middlewares/verifyAuth'); \home\ubuntu\bigbox-profit\app\general\dash_gestao_precos\gpDashRoute.js
 
-var gestao_precos_dashboard_route = require('../general/dash_gestao_precos/gpDashRoute');
+var gestao_precos_dashboard_route = require('../general/dash_gestao_precos/gpDashRoute.js');
 
 const router = express.Router();
 
@@ -37,7 +37,7 @@ const router = express.Router();
 // index page do dashboard da gestao de preços
 router.use('/gestao-precos-dashboard', gestao_precos_dashboard_route);
 
-const router = express.Router();
+
 
 // Gestão de Routes
 
