@@ -29,6 +29,14 @@ var { getAllFilters,
 
 //var verifyAuth = require('../middlewares/verifyAuth');
 
+var gestao_precos_dashboard_route = require('../general/dash_gestao_precos/gpDashRoute');
+
+const router = express.Router();
+
+// vai para o dashboard na v2 -- eliminar isso no futuro
+// index page do dashboard da gestao de preços
+router.use('/gestao-precos-dashboard', gestao_precos_dashboard_route);
+
 const router = express.Router();
 
 // Gestão de Routes
