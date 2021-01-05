@@ -577,8 +577,11 @@ const {
 
       const dbResponse = rows;
       if (dbResponse[0] === undefined) {
-        errorMessage.error = 'Não Existem pesquisas para este item';
-        return res.status(status.notfound).send(errorMessage);
+        var sm = {}
+        var resp = []
+        sm.registros = 0;
+        sm.data = resp;
+        return res.status(status.success).send(sm);
       }
       
       successMessage.registros = dbResponse.length;

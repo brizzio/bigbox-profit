@@ -130,25 +130,27 @@ const {
      * @returns {object} data
   */
  const filterTable = async (req, res) => {
-        
+  
+  let calledRoute = req.originalUrl.match('^[^?]*')[0].split('/').slice(1)
+  let endpoint = calledRoute.slice(-1).toString().replace(new RegExp("'", 'g'), "").replace(new RegExp("-", 'g'), "_")
        
   var page_items= parseInt(req.body.registros.replace("'","")) 
   var pagina = parseInt(req.body.pagina.replace("'",""))
   var offs = (pagina -1) * page_items
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-  var tipo = req.body.tipo.replace(new RegExp("'", 'g'), "")
-  var opt = ["pais","filhos","proporcionais"]
+  //var tipo = //req.body.tipo.replace(new RegExp("'", 'g'), "")
+  var opt = ["filtro","paisefilhos","proporcionais"]
   var str_params = ''
 
   console.log(typeof opt[0] )
 
-  console.log( tipo + ' >>> ' + opt[0] + ' === ' +  (tipo == opt[0]))
-  console.log( tipo + ' >>> ' + opt[1] + ' === ' +    (tipo == opt[1]))
-  console.log( tipo + ' >>> ' + opt[2] + ' === ' +    (tipo == opt[2]))
+  console.log( endpoint + ' >>> ' + opt[0] + ' === ' +  (endpoint == opt[0]))
+  console.log( endpoint + ' >>> ' + opt[1] + ' === ' +  (endpoint == opt[1]))
+  console.log( endpoint + ' >>> ' + opt[2] + ' === ' +  (endpoint == opt[2]))
 
-    if (tipo == opt[0]){
+    if (endpoint == opt[0]){
       str_params = "'PAI',0,0,0,0,null";
-    } else if (tipo == opt[1]) {
+    } else if (endpoint == opt[1]) {
       str_params = "null,1,0,0,0,null";
     } else {
       str_params = "null,0,1,0,0,null";
@@ -343,8 +345,18 @@ const {
     
     //pagina=req.params.pagina 
     //var offs = (pagina -1)*page_items
-    const strQuery = `select * from ${schema}.tratar_dados_pais_filhos_proporcionais
-    where cluster_simulador = ${cluster} and cod_pai_proporcao =${cod_pai_proporcional};`
+    const strQuery = `select * from pricepoint.filtro_multiplo (
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      ${cluster},
+      null,
+      null,      
+      '${schema}',null,0,1,0,0,null) where cod_pai_proporcao =${cod_pai_proporcional};`
     
     try {
        const { rows } = await dbQuery.query(strQuery);
@@ -381,23 +393,26 @@ const {
   */
  const getPesquisasByPai = async (req, res) => {
     
-  var cluster = req.body.cluster
-  var cod_pai = req.body.codigo_pai
-  var tipo_concorrente = req.body.tipo_concorrente
+  var cluster = req.body.cluster.replace(new RegExp("'", 'g'), "")
+  var cod_pai = req.body.codigo_pai.replace(new RegExp("'", 'g'), "")
+  var tipo_concorrente = req.body.tipo_concorrente.replace(new RegExp("'", 'g'), "")
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
   //pagina=req.params.pagina 
   //var offs = (pagina -1)*page_items
-  const strQuery = `select * from ${schema}.pesquisas_codigo_pai(${cod_pai}, ${cluster},${tipo_concorrente});`
-  
+  const strQuery = `select * from pricepoint.pesquisas_codigo_pai('${cod_pai}', '${cluster}','${tipo_concorrente}','${schema}');`
+
   try {
      const { rows } = await dbQuery.query(strQuery);
     //console.log(JSON.stringify(rows))
 
     const dbResponse = rows;
     if (dbResponse[0] === undefined) {
-      errorMessage.error = 'Não Existem pesquisas para este item';
-      return res.status(status.notfound).send(errorMessage);
-    }
+        var sm = {}
+        var resp = []
+        sm.registros = 0;
+        sm.data = resp;
+        return res.status(status.success).send(sm);
+      }
     
     successMessage.registros = dbResponse.length;
     successMessage.data = dbResponse;
@@ -618,10 +633,11 @@ const {
   * @param {object} uid:not null
   * @param {object} db_schema:'pricing_bigbox'
   * @returns {string} OK
+  * select dia.exporta_itens('1234', '2020-01-05')
   */
 const exportaItens = async (req, res) => {
   
-  const strQuery = `select * from pricing_bigbox.exporta_itens (${req.body.uid},${req.body.data});`
+  const strQuery = `select * from ${req.body.db_schema}.exporta_itens (${req.body.uid},${req.body.data});`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
@@ -643,6 +659,47 @@ const exportaItens = async (req, res) => {
     return res.status(status.error).send(errorMessage);
   }
 };
+
+/**
+  * exporta itens para uma determinada data 
+  * @param {object} req 
+  * @param {object} res 
+  * @param {object} uid:not null
+  * @param {object} db_schema:'pricing_bigbox'
+  * @returns {string} OK
+  * select dia.exporta_itens('1234', '2020-01-05')
+  */
+ const downloadItensExportados = async (req, res) => {
+  
+  const strQuery = `select * from ${req.body.db_schema}.arquivo_exportacao;`
+  
+  try {
+     const { rows } = await dbQuery.query(strQuery);
+    //console.log(JSON.stringify(rows))
+
+    const dbResponse = rows;
+    if (dbResponse[0] === undefined) {
+      msg = {}
+      msg.data = [];
+      return res.status(status.success).send(msg);
+    }
+    
+    successMessage.registros = dbResponse.length;
+    successMessage.data = dbResponse;
+    
+   
+    return res.status(status.success).send(successMessage);
+  } catch (error) {
+    errorMessage.error = JSON.stringify(error);
+    return res.status(status.error).send(errorMessage);
+  }
+};
+
+
+
+
+
+
 
 /**
   * remove itens exportados pelo usuario da lista 
@@ -753,10 +810,10 @@ const resetItensExportadosByUserId = async (req, res) => {
   */
  const filterByStringOnSearchBox = async (req, res) => {
  
-  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-  var texto = req.body.texto.toUpperCase()
+  var texto = req.params.texto.toUpperCase()
 
-  var strq = `select * from pricepoint.filtro_search_box(null,null,null,null,null,null,null,null,null,null,${req.body.db_schema},null,0,0,0,0,null,${texto});`
+  var strq = `select * from pricepoint.filtro_search_box(
+    '${req.params.schema}','${texto}');`
    
   try {
      
@@ -995,6 +1052,7 @@ const filterBySliderValue = async (req, res) => {
                     resetItensExportadosByUserId,
                     getPesquisasByPai,
                     exportaItens,
+                    downloadItensExportados,
                     filterByDiferencaTotal,
                     slidersMinMaxValues,
                     filterBySliderValue,

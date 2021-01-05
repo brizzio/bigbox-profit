@@ -4,9 +4,10 @@ var dash = require('./gpDashController');
 
 const { verifyAPIToken }  = require('../../middlewares/verifyApiAuth');
 //const logs  = require('../../middlewares/logger');
-const { nextTick } = require('async');
+//const { nextTick } = require('async');
 
 const router = express.Router();
+
 
 //router.use(logs.sysLogger)
 
@@ -35,6 +36,7 @@ router.post('/indice-competitividade', dash.getDashData);
 router.post('/totalizadores-dash', dash.getDashData);
 
 router.post('/venda-sensibilidade',dash.getDashData);
+
 
 
 module.exports = router;
