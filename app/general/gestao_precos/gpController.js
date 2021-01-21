@@ -637,7 +637,9 @@ const {
   */
 const exportaItens = async (req, res) => {
   
-  const strQuery = `select * from ${req.body.db_schema}.exporta_itens (${req.body.uid},${req.body.data});`
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+  
+  const strQuery = `select * from ${schema}.exporta_itens (${req.body.uid},${req.body.data});`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
@@ -645,8 +647,10 @@ const exportaItens = async (req, res) => {
 
     const dbResponse = rows;
     if (dbResponse[0] === undefined) {
-      errorMessage.error = 'Erro na gravação de dados de exportação';
-      return res.status(status.notfound).send(errorMessage);
+      let msg = {}
+      msg.data = []
+      msg.message = 'Não existem itens exportados...';
+      return res.status(status.success).send(msg);
     }
     
     successMessage.registros = dbResponse.length;
@@ -671,7 +675,9 @@ const exportaItens = async (req, res) => {
   */
  const downloadItensExportados = async (req, res) => {
   
-  const strQuery = `select * from ${req.body.db_schema}.arquivo_exportacao;`
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+
+  const strQuery = `select * from ${schema}.arquivo_exportacao;`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
@@ -694,11 +700,6 @@ const exportaItens = async (req, res) => {
     return res.status(status.error).send(errorMessage);
   }
 };
-
-
-
-
-
 
 
 /**

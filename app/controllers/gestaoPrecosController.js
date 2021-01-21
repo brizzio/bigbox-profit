@@ -441,7 +441,8 @@ const {
     var preco_decisao = req.body.preco_decisao
     var user = req.body.uid
 
-    const strQuery = `select pricing_bigbox.update_preco_decisao(${cod_pai},${analisado},${exportado},${preco_decisao},${cluster},${user});`
+    //pricing_bigbox.update_values
+    const strQuery = `select pricing_bigbox.update_values(${cod_pai},${analisado},${exportado},${preco_decisao},${cluster},${user});`
     
     try {
        const { rows } = await dbQuery.query(strQuery);

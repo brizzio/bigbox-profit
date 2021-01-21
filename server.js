@@ -1,7 +1,7 @@
 var express = require('express')
 var cors = require('cors')
 var env = require('./env');
-var usersRoute = require('./app/routes/usersRoute');
+var usersRoute = require('./app/general/users/usersRoute');
 var gestaoPrecosRoute = require('./app/routes/gestaoPrecosRoute');
 var lumiRoute = require('./app/routes/lumiRoute');
 var appController = require('./app/controllers/appController');
@@ -55,7 +55,7 @@ app.set('view engine', 'ejs');
 app.use('/api/v1', gestaoPrecosRoute);
 app.use('/api/v2', mainRoute);
 app.use('/api', lumiRoute);
-//app.use('/api/v1', bookingRoute);
+app.use('/api/users', usersRoute);
 
 
 app.listen('5566').on('listening', () => {
