@@ -72,6 +72,7 @@ const {
    */
   const filtroDependente = async (req, res) => {
 
+  console.log(req.body)
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
 
    const strQuery = `
@@ -636,8 +637,10 @@ const {
   * select dia.exporta_itens('1234', '2020-01-05')
   */
 const exportaItens = async (req, res) => {
+
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
   
-  const strQuery = `select * from ${req.body.db_schema}.exporta_itens (${req.body.uid},${req.body.data});`
+  const strQuery = `select * from ${schema}.exporta_itens (${req.body.uid},${req.body.data});`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
@@ -645,8 +648,10 @@ const exportaItens = async (req, res) => {
 
     const dbResponse = rows;
     if (dbResponse[0] === undefined) {
-      errorMessage.error = 'Erro na gravação de dados de exportação';
-      return res.status(status.notfound).send(errorMessage);
+      let msg = {}
+      msg.data = []
+      msg.message = 'Não existem itens exportados...';
+      return res.status(status.success).send(msg);
     }
     
     successMessage.registros = dbResponse.length;
@@ -671,7 +676,9 @@ const exportaItens = async (req, res) => {
   */
  const downloadItensExportados = async (req, res) => {
   
-  const strQuery = `select * from ${req.body.db_schema}.arquivo_exportacao;`
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+
+  const strQuery = `select * from ${schema}.arquivo_exportacao;`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
