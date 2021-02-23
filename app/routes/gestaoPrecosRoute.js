@@ -27,9 +27,17 @@ var { getAllFilters,
       filterByStringOnSearchBox
 } = require('../controllers/gestaoPrecosController');
 
-//var verifyAuth = require('../middlewares/verifyAuth');
+//var verifyAuth = require('../middlewares/verifyAuth'); \home\ubuntu\bigbox-profit\app\general\dash_gestao_precos\gpDashRoute.js
+
+var gestao_precos_dashboard_route = require('../general/dash_gestao_precos/gpDashRoute.js');
 
 const router = express.Router();
+
+// vai para o dashboard na v2 -- eliminar isso no futuro
+// index page do dashboard da gestao de preços
+router.use('/gestao-precos-dashboard', gestao_precos_dashboard_route);
+
+
 
 // Gestão de Routes
 
@@ -130,7 +138,7 @@ router.post('/gestao/classificador/valores-min-max-sliders', slidersMinMaxValues
 router.post('/gestao/classificador/slider-filtro', filterBySliderValue);
 
 //filtra a tabela gestão de precos pelo texto no checkbox
-router.get('/gestao/search/:texto', filterByStringOnSearchBox);
+router.get('/gestao/search/:schema/:texto', filterByStringOnSearchBox);
 
 
 module.exports = router;

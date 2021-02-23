@@ -441,7 +441,8 @@ const {
     var preco_decisao = req.body.preco_decisao
     var user = req.body.uid
 
-    const strQuery = `select pricing_bigbox.update_preco_decisao(${cod_pai},${analisado},${exportado},${preco_decisao},${cluster},${user});`
+    //pricing_bigbox.update_values
+    const strQuery = `select pricing_bigbox.update_values(${cod_pai},${analisado},${exportado},${preco_decisao},${cluster},${user});`
     
     try {
        const { rows } = await dbQuery.query(strQuery);
@@ -577,8 +578,11 @@ const {
 
       const dbResponse = rows;
       if (dbResponse[0] === undefined) {
-        errorMessage.error = 'Não Existem pesquisas para este item';
-        return res.status(status.notfound).send(errorMessage);
+        var sm = {}
+        var resp = []
+        sm.registros = 0;
+        sm.data = resp;
+        return res.status(status.success).send(sm);
       }
       
       successMessage.registros = dbResponse.length;

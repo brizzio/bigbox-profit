@@ -6,7 +6,7 @@ var {
     getTotalizadoresParaItensEditados,//ok
     filterTable, //ok
     filtroDependente, //ok
-    getFilhosByPaiProporcional, //ok
+    getFilhosByPaiProporcional, // funcao com erro 
     updateNovoPreco, //ok
     updateCheckboxMultiploOnClick, //ok
     getItensEditadosByUserId, //ok
@@ -15,6 +15,7 @@ var {
     resetItensExportadosByUserId,
     getPesquisasByPai, //ok
     exportaItens, //ok
+    downloadItensExportados,
     filterByDiferencaTotal,
     slidersMinMaxValues,
     filterBySliderValue,
@@ -51,6 +52,8 @@ router.post('/gestao/filtro-dependentes', filtroDependente); //------ok
 * filtra a tabela gestão de precos e retorna registros filtrados 
 */
 router.post('/gestao/filtro', filterTable); //------ok
+router.post('/gestao/filtro/paisefilhos', filterTable); //------ok
+router.post('/gestao/filtro/proporcionais', filterTable); //------ok
 
 /**
 * Retorna os totais da gestão de precos 
@@ -105,6 +108,7 @@ router.post('/gestao/update/lista-itens-exportados', getItensExportadosByUserId)
 * exporta itens para uma determinada data 
 */
 router.post('/gestao/export', exportaItens);
+router.post('/gestao/file-download', downloadItensExportados);
 
 /** 
 * elimina a lista de exportacao do usuario mantendo a lista de itens alterados
@@ -120,10 +124,9 @@ router.post('/gestao/classificador/valores-min-max-sliders', slidersMinMaxValues
 //filtra a tabela gestão de precos e retorna registros filtrados segundo valor no slider
 router.post('/gestao/classificador/slider-filtro', filterBySliderValue);
 
-/** 
-* filtra a tabela gestão de precos pelo texto no checkbox
-*/
-router.post('/gestao/search', filterByStringOnSearchBox); //---- ok
+//filtra a tabela gestão de precos pelo texto no checkbox
+router.get('/gestao/search/:schema/:texto/:cluster?', filterByStringOnSearchBox);
+
 
 
 module.exports = router;

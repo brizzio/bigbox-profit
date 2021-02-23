@@ -87,7 +87,9 @@ const {
   */
  const getGeoLojas = async (req, res) => {
   
-  const strQuery = `select bigbox.cadastro_lojas;`
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+
+  const strQuery = `select * from ${schema}.cadastro_lojas;`
   
   try {
     
@@ -118,7 +120,9 @@ const {
   */
 const getGeoConcorrentes = async (req, res) => {
   
-  const strQuery = `select * from pricing_bigbox.cadastro_concorrentes;`
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+
+  const strQuery = `select * from ${schema}.cadastro_concorrentes;`
   
   try {
     
