@@ -9,6 +9,7 @@ const {
     successMessage, 
     status
   } = require('../../helpers/status');
+const { select } = require('async');
 
 
 
@@ -1020,6 +1021,8 @@ const filterBySliderValue = async (req, res) => {
   strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${filtro} ${tree}`
   
   
+  
+
     try {
       
       if (pagina == 1){
@@ -1037,18 +1040,66 @@ const filterBySliderValue = async (req, res) => {
     const { rows } = await dbQuery.query(strQuery);
     
     const dbResponse = rows;
-    if (dbResponse[0] === undefined) {
+    if (dbResponse[0] === undefined) 
+    {
       errorMessage.error = JSON.stringify(req.body);
      return res.status(status.notfound).send(errorMessage);
-    }
-    
-    sm.pagina = pagina
-    sm.start_at = offs + 1;
-    sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
-    sm.data = dbResponse;
+    }else{
 
-   
-    return res.status(status.success).send(sm);
+          var id_editavel_array = []
+          
+          dbResponse.forEach((item)=>{
+            console.log(item.cod_pai_proporcao !== item.codigo_filhos)
+              if (item.cod_pai_proporcao !== item.codigo_filhos){
+                id_editavel_array.push(item.id_editavel)
+              }else{
+                id_editavel_array = id_editavel_array.filter(e => e !== item.id_editavel)
+              }
+              
+          })
+          
+          if(id_editavel_array.length > 0){
+              var pais_editaveis_ausentes = "(" + [...new Set(id_editavel_array)].map(array_item => `'${array_item}'`).join(',') + ")"
+              console.log('array de ids editaveis ===>' + pais_editaveis_ausentes)
+              const result = await dbQuery.query(`select * from ${schema}.vw_dados_totais where id_editavel IN ${pais_editaveis_ausentes} and flag_pai_ou_filho = 'PAI'`); 
+              var pais_editaveis = result.rows;
+              // atualiza o numero de registros e paginas
+              sm.registros = sm.registros 
+
+              console.log('pais_editaveis quantidade ===>' + Object.keys(pais_editaveis).lenght)
+
+              sm.paginas = Math.ceil(sm.registros / page_items)
+
+              console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
+
+              pais_editaveis.forEach(obj=>dbResponse.push(obj))
+              
+                            sm.pagina = pagina
+                            sm.start_at = offs + 1;
+                            sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+                            sm.data = dbResponse.sort(function(a, b) {
+                              return a.cod_pai_proporcao.localeCompare(b.cod_pai_proporcao) || a.flag_pai_ou_filho < b.flag_pai_ou_filho
+                            });
+
+                  
+                          
+                            return res.status(status.success).send(sm);              
+          
+          }else{
+
+            sm.pagina = pagina
+            sm.start_at = offs + 1;
+            sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+            sm.data = dbResponse;
+  
+          
+                            return res.status(status.success).send(sm);
+
+          }
+          
+             
+    }
+
   } catch (error) {
     errorMessage.error = JSON.stringify(error);
     return res.status(status.error).send(errorMessage);

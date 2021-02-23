@@ -9,7 +9,7 @@ const logs  = require('../../middlewares/logger');
 const router = express.Router();
 
 //carrega o middleware para registro das requisições 
-router.use(logs.sysLogger)
+//router.use(logs.sysLogger)
 
 // index page 
 router.use('/', gestao_precos_route);

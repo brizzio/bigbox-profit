@@ -10,8 +10,8 @@ module.exports = {
    */
   query(quertText, params) {
     return new Promise((resolve, reject) => {
-      //console.log('executando a query...')
-      //console.log(quertText)
+      console.log('executando a query...')
+      console.log(quertText)
       pool.query(quertText, params)
         .then((res) => {
           resolve(res);
@@ -25,8 +25,8 @@ module.exports = {
 
   sql(quertText, params) {
     return new Promise((resolve, reject) => {
-      //console.log('executando a sql...')
-      //console.log(quertText)
+      console.log('executando a sql...')
+      console.log(quertText)
       pool.query(quertText, params)
         .then((res) => {
           resolve(res);
