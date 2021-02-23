@@ -37,6 +37,7 @@ router.post('/totalizadores-dash', dash.getDashData);
 
 router.post('/venda-sensibilidade',dash.getDashData);
 
+router.post('/vendas-tipo',dash.getDashData);
 
 
 module.exports = router;

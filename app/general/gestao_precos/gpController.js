@@ -73,6 +73,16 @@ const {
   const filtroDependente = async (req, res) => {
 
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+  // ${req.body.departamento},
+  // ${req.body.secao},
+  // ${req.body.grupo},
+  // ${req.body.sub_grupo},---------
+  // ${req.body.produto},
+  // ${req.body.fornecedor},
+  // ${req.body.bandeira},-----------
+  // ${req.body.cluster},
+  // ${req.body.sensibilidade},
+  // ${req.body.papel_categoria},
 
    const strQuery = `
       select * from pricepoint.filtro_dependente(
@@ -86,7 +96,7 @@ const {
         ${req.body.cluster},
         ${req.body.sensibilidade},
         ${req.body.papel_categoria},
-        '${schema}','PAI',0,0,0,0,null);`
+        '${schema}',null,0,0,0,0,null,null,null);`
       
     try {
       
@@ -142,11 +152,11 @@ const {
   var opt = ["filtro","paisefilhos","proporcionais"]
   var str_params = ''
 
-  console.log(typeof opt[0] )
+  //console.log(typeof opt[0] )
 
-  console.log( endpoint + ' >>> ' + opt[0] + ' === ' +  (endpoint == opt[0]))
-  console.log( endpoint + ' >>> ' + opt[1] + ' === ' +  (endpoint == opt[1]))
-  console.log( endpoint + ' >>> ' + opt[2] + ' === ' +  (endpoint == opt[2]))
+  //console.log( endpoint + ' >>> ' + opt[0] + ' === ' +  (endpoint == opt[0]))
+  //console.log( endpoint + ' >>> ' + opt[1] + ' === ' +  (endpoint == opt[1]))
+  //console.log( endpoint + ' >>> ' + opt[2] + ' === ' +  (endpoint == opt[2]))
 
     if (endpoint == opt[0]){
       str_params = "'PAI',0,0,0,0,null";
@@ -157,7 +167,7 @@ const {
     }
     
 
-  console.log('complemento=====>' +  str_params)
+  //console.log('complemento=====>' +  str_params)
   
   var strQuery = `
     select * from pricepoint.filtro_multiplo (
@@ -172,8 +182,9 @@ const {
       ${req.body.sensibilidade},
       ${req.body.papel_categoria},      
       '${schema}',
-      ${str_params}
-      ) offset ${offs} limit ${page_items};`
+      ${str_params},
+      '${offs}',
+      '${page_items}');`
 
   const strQueryCount = `
     select count(*) from pricepoint.filtro_multiplo (
@@ -188,7 +199,7 @@ const {
       ${req.body.sensibilidade},
       ${req.body.papel_categoria},      
       '${schema}',
-      ${str_params}
+      ${str_params},null,null
       );`      
   
   try {
@@ -199,7 +210,7 @@ const {
     var reg = countSelect.rows[0].count
     successMessage.registros = reg;
     successMessage.paginas = Math.ceil(reg / page_items)
-    }
+    } 
 
     const { rows } = await dbQuery.query(strQuery);
     
@@ -549,13 +560,13 @@ const {
     var strQuery = `
     select * from pricepoint.filtro_multiplo (
     null,null,null,null,null,null,null,null,null,null,      
-    ${req.body.db_schema},null,0,0,1,0,${req.body.uid}) offset ${offs} limit ${page_items};`
+    ${req.body.db_schema},null,0,0,1,0,${req.body.uid},'${offs}','${page_items}');`
   
 
    const strQueryCount = `
    select count(*) from pricepoint.filtro_multiplo (
    null,null,null,null,null,null,null,null,null,null,      
-   ${req.body.db_schema},null,0,0,1,0,${req.body.uid});`
+   ${req.body.db_schema},null,0,0,1,0,${req.body.uid},null,null);`
 
 
     try {
@@ -677,7 +688,13 @@ const exportaItens = async (req, res) => {
   
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
 
-  const strQuery = `select * from ${schema}.arquivo_exportacao;`
+  var strQuery = ''
+
+  if(schema == 'pricing_bigbox'){
+    strQuery = `select * from pricing_bigbox.api_retorno;`
+  }else{
+    strQuery =`select * from ${schema}.arquivo_exportacao;`
+  }
   
   try {
      const { rows } = await dbQuery.query(strQuery);
@@ -757,13 +774,13 @@ const resetItensExportadosByUserId = async (req, res) => {
   var strQuery = `
     select * from pricepoint.filtro_multiplo (
     null,null,null,null,null,null,null,null,null,null,      
-    ${req.body.db_schema},null,0,0,0,1,${req.body.uid}) offset ${offs} limit ${page_items};`
+    ${req.body.db_schema},null,0,0,0,1,${req.body.uid},'${offs}','${page_items}');`
   
 
    const strQueryCount = `
    select count(*) from pricepoint.filtro_multiplo (
    null,null,null,null,null,null,null,null,null,null,      
-   ${req.body.db_schema},null,0,0,0,1,${req.body.uid});`
+   ${req.body.db_schema},null,0,0,0,1,${req.body.uid},null,null);`
      
 
    try {
@@ -803,18 +820,18 @@ const resetItensExportadosByUserId = async (req, res) => {
      * Recupera os itens exportados pelo usuario 
      * @param {object} req 
      * @param {object} res 
-     * @param {object} registros:'250'
-     * @param {object} pagina:'1'
-     * @param {object} uid:not null, id do usuario
      * @param {object} db_schema:'pricing_bigbox'
+     * @param {object} texto:not null, string para pocurar
+     * @param {object} cluster:cluster selecionado se houver
      * @returns {object} data
   */
  const filterByStringOnSearchBox = async (req, res) => {
  
   var texto = req.params.texto.toUpperCase()
+  var cluster = (req.params.cluster == null)?"null":"'" + decodeURI(req.params.cluster) + "'"
 
   var strq = `select * from pricepoint.filtro_search_box(
-    '${req.params.schema}','${texto}');`
+    '${req.params.schema}','${texto}',${cluster});`
    
   try {
      
@@ -953,7 +970,13 @@ const filterBySliderValue = async (req, res) => {
   var filtro = ''
   var ordem = ''
   var campo_slider = ''
+  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
   var sm = {}
+  var page_items= parseInt(req.body.registros.replace("'","")) 
+  var pagina = parseInt(req.body.pagina.replace("'",""))
+  var offs = (pagina -1) * page_items
+
+  //console.log('page items...>' + page_items)
 
   var num_slider = parseInt(req.body.slider.replace("'",""))
 
@@ -968,6 +991,20 @@ const filterBySliderValue = async (req, res) => {
       campo_slider = "variacaonovopreco";
   }
 
+  var a =  req.body.departamento=="null"?"":`and nome_departamento=${req.body.departamento}`
+  var b = (req.body.secao=="null")?"":` and nome_secao=${req.body.secao}` 
+  var c =  (req.body.grupo=="null")?"":` and nome_grupo=${req.body.grupo}`
+  var d = (req.body.sub_grupo=="null")?"":` and nome_subgrupo=${req.body.sub_grupo}`
+  var e =  (req.body.produto=="null")?"":` and descricao_produto=${req.body.produto}`
+  var f =  (req.body.fornecedor=="null")?"":` and nome_fornecedor=${req.body.fornecedor}`
+  var g =  (req.body.bandeira=="null")?"":` and bandeira=${req.body.bandeira}`
+  var h =  (req.body.cluster=="null")?"":` and cluster_simulador=${req.body.cluster}`
+  var i = (req.body.sensibilidade=="null")?"":` and sensibilidade_simulador=${req.body.sensibilidade}`
+  var j =  (req.body.papel_categoria=="null")?"":` and papel_categoria_simulador=${req.body.papel_categoria}`
+
+  var tree = a+b+c+d+e+f+g+h+i+j
+
+
   var value = parseInt(req.body.maioriguala.replace("'",""));
 
   if(value >= 0){
@@ -978,41 +1015,24 @@ const filterBySliderValue = async (req, res) => {
     ordem = `order by ${campo_slider} asc`  //offset ' + offs +  ' limit ' + page_items
   }
  
-      strQuery = `select * from pricepoint.filtro_multiplo (
-        ${req.body.departamento},
-        ${req.body.secao},
-        ${req.body.grupo},
-        ${req.body.sub_grupo},
-        ${req.body.produto},
-        ${req.body.fornecedor},
-        ${req.body.bandeira},
-        ${req.body.cluster},
-        ${req.body.sensibilidade},
-        ${req.body.papel_categoria},      
-        ${req.body.db_schema},
-        null,0,0,0,0,null) ${filtro} ${ordem};`
+  strQuery = `select * from ${schema}.vw_dados_totais vdt ${filtro} ${tree} ${ordem} offset ${offs} limit ${page_items}`
 
-      strQueryCount = `select count(*) from pricepoint.filtro_multiplo (
-        ${req.body.departamento},
-        ${req.body.secao},
-        ${req.body.grupo},
-        ${req.body.sub_grupo},
-        ${req.body.produto},
-        ${req.body.fornecedor},
-        ${req.body.bandeira},
-        ${req.body.cluster},
-        ${req.body.sensibilidade},
-        ${req.body.papel_categoria},      
-        ${req.body.db_schema},
-        null,0,0,0,0,null) ${filtro};`
+  strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${filtro} ${tree}`
   
   
     try {
-      console.log(JSON.stringify('query ===> ' + strQueryCount))
+      
+      if (pagina == 1){
+        //console.log(JSON.stringify('query ===> ' + strQueryCount))
+
+        const countSelect = await dbQuery.query(strQueryCount);
+        var reg = countSelect.rows[0].count
+        //console.log('reg...>' + reg)
+        sm.registros = reg;
+        sm.paginas = Math.ceil(reg / page_items)
+        }
     
-    const countSelect = await dbQuery.query(strQueryCount);
-    var reg = countSelect.rows[0].count
-    sm.registros = reg;
+    
     
     const { rows } = await dbQuery.query(strQuery);
     
@@ -1022,10 +1042,11 @@ const filterBySliderValue = async (req, res) => {
      return res.status(status.notfound).send(errorMessage);
     }
     
-    sm.pagina = 1
-    sm.start_at = 1;
-    sm.end_at = sm.registros //< page_items ? sm.registros : offs + page_items+1;
+    sm.pagina = pagina
+    sm.start_at = offs + 1;
+    sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
     sm.data = dbResponse;
+
    
     return res.status(status.success).send(sm);
   } catch (error) {

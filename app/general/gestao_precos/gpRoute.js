@@ -125,7 +125,7 @@ router.post('/gestao/classificador/valores-min-max-sliders', slidersMinMaxValues
 router.post('/gestao/classificador/slider-filtro', filterBySliderValue);
 
 //filtra a tabela gestão de precos pelo texto no checkbox
-router.get('/gestao/search/:schema/:texto', filterByStringOnSearchBox);
+router.get('/gestao/search/:schema/:texto/:cluster?', filterByStringOnSearchBox);
 
 
 
