@@ -977,7 +977,14 @@ const filterBySliderValue = async (req, res) => {
   var pagina = parseInt(req.body.pagina.replace("'",""))
   var offs = (pagina -1) * page_items
 
-  //console.log('page items...>' + page_items)
+  var value = parseInt(req.body.maioriguala.replace("'",""));
+
+  var abaixo_de = req.body.abaixo_de==="null"?null:parseInt(req.body.abaixo_de.replace("'",""));
+  var acima_de = req.body.acima_de==="null"?null:parseInt(req.body.acima_de.replace("'",""));
+
+  console.log('abaixo_de...>' + abaixo_de)
+  console.log('acima_de...>' + acima_de)
+
 
   var num_slider = parseInt(req.body.slider.replace("'",""))
 
@@ -1006,7 +1013,7 @@ const filterBySliderValue = async (req, res) => {
   var tree = a+b+c+d+e+f+g+h+i+j
 
 
-  var value = parseInt(req.body.maioriguala.replace("'",""));
+  
 
   if(value >= 0){
     filtro = `where ${campo_slider} >= ${value}` 
@@ -1015,14 +1022,41 @@ const filterBySliderValue = async (req, res) => {
     filtro = `where ${campo_slider} <= ${value}`
     ordem = `order by ${campo_slider} asc`  //offset ' + offs +  ' limit ' + page_items
   }
- 
+
   strQuery = `select * from ${schema}.vw_dados_totais vdt ${filtro} ${tree} ${ordem} offset ${offs} limit ${page_items}`
 
   strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${filtro} ${tree}`
-  
-  
-  
 
+  //verifica se tem valores acima ou abaixo de.... essa seleção sobrepoe o bloco if anterior
+  var outliers = ''
+
+  if(acima_de || abaixo_de){
+
+      if(acima_de && abaixo_de){
+        
+        //
+        console.log('ambosValoeres...> %s --- %s',abaixo_de,acima_de)
+        outliers= `where ${campo_slider} <= ${abaixo_de} or ${campo_slider} >= ${acima_de}`
+        if (acima_de == abaixo_de){
+          strQuery = `select * from ${schema}.vw_dados_totais vdt where 1=1 ${tree} ${ordem} offset ${offs} limit ${page_items}`
+        }
+
+      }else{
+
+          outliers = abaixo_de!==null?`where ${campo_slider} <= ${abaixo_de}`:`where ${campo_slider} >= ${acima_de}`
+          
+      }
+
+      ordem = `order by ${campo_slider} desc`
+
+      strQuery = `select * from ${schema}.vw_dados_totais vdt ${outliers} ${tree} ${ordem} offset ${offs} limit ${page_items}`
+
+      strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${outliers} ${tree}`
+  }
+
+  console.log('outliers...> ' + outliers + ' ordem...> ' + ordem)
+
+ 
     try {
       
       if (pagina == 1){
@@ -1049,11 +1083,13 @@ const filterBySliderValue = async (req, res) => {
           var id_editavel_array = []
           
           dbResponse.forEach((item)=>{
-            console.log(item.cod_pai_proporcao !== item.codigo_filhos)
+            console.log('eh um item pai editavel? %s --- id: s%',item.cod_pai_proporcao !== item.codigo_filhos,item.id_editavel)
               if (item.cod_pai_proporcao !== item.codigo_filhos){
                 id_editavel_array.push(item.id_editavel)
+                console.log('adiciona? %s ---- SIM',item.id_editavel)
               }else{
                 id_editavel_array = id_editavel_array.filter(e => e !== item.id_editavel)
+                console.log('removido %s ---- SIM',item.id_editavel)
               }
               
           })
@@ -1064,26 +1100,32 @@ const filterBySliderValue = async (req, res) => {
               const result = await dbQuery.query(`select * from ${schema}.vw_dados_totais where id_editavel IN ${pais_editaveis_ausentes} and flag_pai_ou_filho = 'PAI'`); 
               var pais_editaveis = result.rows;
               // atualiza o numero de registros e paginas
-              sm.registros = sm.registros 
+              sm.registros = parseInt(sm.registros) + parseInt(Object.keys(pais_editaveis).length)
 
-              console.log('pais_editaveis quantidade ===>' + Object.keys(pais_editaveis).lenght)
+              console.log('pais_editaveis quantidade ===>' + Object.keys(pais_editaveis).length)
 
               sm.paginas = Math.ceil(sm.registros / page_items)
 
-              console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
+              //console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
+
+              sm.pais_editaveis_ausentes = pais_editaveis_ausentes
 
               pais_editaveis.forEach(obj=>dbResponse.push(obj))
               
-                            sm.pagina = pagina
-                            sm.start_at = offs + 1;
-                            sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
-                            sm.data = dbResponse.sort(function(a, b) {
-                              return a.cod_pai_proporcao.localeCompare(b.cod_pai_proporcao) || a.flag_pai_ou_filho < b.flag_pai_ou_filho
-                            });
-
-                  
+              sm.pagina = pagina
+              sm.start_at = offs + 1;
+              sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+              sm.data = dbResponse.sort(function(a, b) {
+                        //If the first item comes first in the alphabet, move it up
+                        if (a.id_editavel > b.id_editavel) return 1
+                        if (a.id_editavel < b.id_editavel) return -1
+                        //poe o pai primeiro
+                        if (a.flag_pai_ou_filho > b.flag_pai_ou_filho) return -1
+                        if (a.flag_pai_ou_filho < b.flag_pai_ou_filho) return 1
+                      });
+  
                           
-                            return res.status(status.success).send(sm);              
+              return res.status(status.success).send(sm);              
           
           }else{
 
