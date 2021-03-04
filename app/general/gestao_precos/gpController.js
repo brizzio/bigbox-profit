@@ -1036,7 +1036,7 @@ const filterBySliderValue = async (req, res) => {
         
         //
         console.log('ambosValoeres...> %s --- %s',abaixo_de,acima_de)
-        outliers= `where ${campo_slider} <= ${abaixo_de} or ${campo_slider} >= ${acima_de}`
+        outliers= `where ( ${campo_slider} <= ${abaixo_de} or ${campo_slider} >= ${acima_de} )`
         if (acima_de == abaixo_de){
           strQuery = `select * from ${schema}.vw_dados_totais vdt where 1=1 ${tree} ${ordem} offset ${offs} limit ${page_items}`
         }
