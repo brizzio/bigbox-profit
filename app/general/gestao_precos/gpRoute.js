@@ -8,8 +8,10 @@ var {
     filtroDependente, //ok
     getFilhosByPaiProporcional, // funcao com erro 
     updateNovoPreco, //ok
+    updateNovoPrecoTeste, // remover esse aqui ********************************
     updateCheckboxMultiploOnClick, //ok
     getItensEditadosByUserId, //ok
+    getItensBloqueadosByUserId, //ok ****** NOVA *******
     getItensExportadosByUserId, //ok
     resetItensEditadosByUserId, //ok
     resetItensExportadosByUserId,
@@ -83,6 +85,11 @@ router.post('/gestao/pesquisas', getPesquisasByPai); //-------ok
 */
 router.post('/gestao/update', updateNovoPreco); //-------ok
 
+/** REMOVER ESSA ROTA DA APLICACAO *********************
+* executa o update dos preços alterados pelo usuario
+*/
+router.post('/gestao/update-teste', updateNovoPrecoTeste); //-------ok
+
 /**
 * executa o update dos preços em varios chekboxes ao mesmo tempo
 */
@@ -92,6 +99,14 @@ router.post('/gestao/update/checkboxes', updateCheckboxMultiploOnClick); //----o
 * recupera os itens alterados pelo usuario
 */
 router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId); //----ok
+
+
+/** 
+* recupera os itens bloqueados para exportacao
+*/
+router.post('/gestao/update/lista-itens-bloqueados', getItensBloqueadosByUserId); //----ok
+
+
 
 /** 
 * elimina os itens alterados pelo usuario da lista de itens alterados
