@@ -5,13 +5,15 @@ var {
     getGestaoTotalizadores, //ok
     getTotalizadoresParaItensEditados,//ok
     filterTable, //ok
-    filtroDependente, //ok
+    filtroDependente,
+    filtroDependente2, //ok
     getFilhosByPaiProporcional, // funcao com erro 
     updateNovoPreco, //ok
     updateNovoPrecoTeste, // remover esse aqui ********************************
     updateCheckboxMultiploOnClick, //ok
     getItensEditadosByUserId, //ok
     getItensBloqueadosByUserId, //ok ****** NOVA *******
+    resetItensBloqueadosByUserId,
     getItensExportadosByUserId, //ok
     resetItensEditadosByUserId, //ok
     resetItensExportadosByUserId,
@@ -48,7 +50,7 @@ router.get('/filters/:db_schema', getAllFilters); //-----------ok
 /**
 * pega os filtros correspondentes às seleções feitas
 */
-router.post('/gestao/filtro-dependentes', filtroDependente); //------ok
+router.post('/gestao/filtro-dependentes', filtroDependente2); //------ok
 
 /**
 * filtra a tabela gestão de precos e retorna registros filtrados 
@@ -96,7 +98,7 @@ router.post('/gestao/update-teste', updateNovoPrecoTeste); //-------ok
 router.post('/gestao/update/checkboxes', updateCheckboxMultiploOnClick); //----ok
 
 /** 
-* recupera os itens alterados pelo usuario
+* recupera os itens alterados pelo usuarios
 */
 router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId); //----ok
 
@@ -106,6 +108,7 @@ router.post('/gestao/update/lista-itens-editados', getItensEditadosByUserId); //
 */
 router.post('/gestao/update/lista-itens-bloqueados', getItensBloqueadosByUserId); //----ok
 
+router.post('/gestao/update/reset-bloqueados', resetItensBloqueadosByUserId); //----ok
 
 
 /** 

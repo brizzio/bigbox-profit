@@ -3,6 +3,8 @@
 var dbQuery = require('../../db/dev/dbQuery');
 
 const {empty} = require('../../helpers/validations');
+
+const fn = require('../../helpers/functions');
  
 const {
     errorMessage, 
@@ -120,6 +122,56 @@ const { select } = require('async');
     }
   };
 
+
+  const filtroDependente2 = async (req, res) => {
+
+    var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+    // ${req.body.departamento},
+    // ${req.body.secao},
+    // ${req.body.grupo},
+    // ${req.body.sub_grupo},---------
+    // ${req.body.produto},
+    // ${req.body.fornecedor},
+    // ${req.body.bandeira},-----------
+    // ${req.body.cluster},
+    // ${req.body.sensibilidade},
+    // ${req.body.papel_categoria},
+  
+     const strQuery = `
+        select * from pricepoint.filtro_dependente(
+          ${req.body.departamento},
+          ${req.body.secao},
+          ${req.body.grupo},
+          ${req.body.sub_grupo},
+          ${req.body.produto},
+          ${req.body.fornecedor},
+          ${req.body.bandeira},
+          ${req.body.cluster},
+          ${req.body.sensibilidade},
+          ${req.body.papel_categoria},
+          '${schema}',null,0,0,0,0,null,null,null);`
+        
+      try {
+        
+        const { rows } = await dbQuery.query(strQuery);
+        //console.log(JSON.stringify(rows))
+  
+        const dbResponse = rows;
+        if (dbResponse[0] === undefined) {
+          var msg = {}
+          msg.data = [];
+          return res.status(status.success).send(msg);
+        }
+        
+        successMessage.data = dbResponse;
+       
+        return res.status(status.success).send(successMessage);
+      } catch (error) {
+        errorMessage.error = JSON.stringify(error);
+        return res.status(status.error).send(errorMessage);
+      }
+    };
+
   /**
      * Retorna a tabela filtrada
      * @param {object} req 
@@ -144,7 +196,8 @@ const { select } = require('async');
   
   let calledRoute = req.originalUrl.match('^[^?]*')[0].split('/').slice(1)
   let endpoint = calledRoute.slice(-1).toString().replace(new RegExp("'", 'g'), "").replace(new RegExp("-", 'g'), "_")
-       
+  
+  var msg = {}
   var page_items= parseInt(req.body.registros.replace("'","")) 
   var pagina = parseInt(req.body.pagina.replace("'",""))
   var offs = (pagina -1) * page_items
@@ -160,11 +213,11 @@ const { select } = require('async');
   //console.log( endpoint + ' >>> ' + opt[2] + ' === ' +  (endpoint == opt[2]))
 
     if (endpoint == opt[0]){
-      str_params = "'PAI',0,0,0,0,null";
+      str_params = "'PAI',0,0,null,0,null";
     } else if (endpoint == opt[1]) {
-      str_params = "null,1,0,0,0,null";
+      str_params = "null,1,0,null,0,null";
     } else {
-      str_params = "null,0,1,0,0,null";
+      str_params = "null,0,1,null,0,null";
     }
     
 
@@ -207,10 +260,10 @@ const { select } = require('async');
     
     if (pagina == 1){
     const countSelect = await dbQuery.query(strQueryCount);
-    //console.log(JSON.stringify('contagem ===> ' + rows))
+    console.log(JSON.stringify('contagem ===> ' + countSelect.rows[0].count))
     var reg = countSelect.rows[0].count
-    successMessage.registros = reg;
-    successMessage.paginas = Math.ceil(reg / page_items)
+    msg.registros = reg;
+    msg.paginas = Math.ceil(reg / page_items)
     } 
 
     const { rows } = await dbQuery.query(strQuery);
@@ -218,17 +271,17 @@ const { select } = require('async');
 
     const dbResponse = rows;
     if (dbResponse[0] === undefined) {
-      var msg = {}
+      
       msg.data = [];
       return res.status(status.success).send(msg);
     }
     
-    successMessage.pagina = pagina
-    successMessage.start_at = offs + 1;
-    successMessage.end_at = successMessage.registros < page_items ? successMessage.registros : offs + page_items+1;
-    successMessage.data = dbResponse;
+    msg.pagina = pagina
+    msg.start_at = offs + 1;
+    msg.end_at = msg.registros < page_items ? msg.registros : offs + page_items+1;
+    msg.data = dbResponse;
    
-    return res.status(status.success).send(successMessage);
+    return res.status(status.success).send(msg);
   } catch (error) {
     errorMessage.error = JSON.stringify(error);
     return res.status(status.error).send(errorMessage);
@@ -489,16 +542,18 @@ const { select } = require('async');
     
   var cluster = req.body.cluster
   var cod_pai = req.body.codigo_pai
-  var analisado = req.body.analisado
+  var analizado = req.body.analizado
   //var exportado = req.body.exportado
   var preco_decisao = req.body.preco_decisao
   var user = req.body.uid
 
-  var strQuery = `select pricepoint.update_values_test(null,null,null,null,null,null,null,null,null,null,${analisado},${user},${req.body.db_schema},${cod_pai},${preco_decisao},'0',${cluster});`
+  const newKeys = { update_values_test: "update_values" };
+
+  var strQuery = `select pricepoint.update_values_test(null,null,null,null,null,null,null,null,null,null,${analizado},${user},${req.body.db_schema},${cod_pai},${preco_decisao},'0',${cluster});`
   
   try {
      const { rows } = await dbQuery.query(strQuery);
-    //console.log(JSON.stringify(rows))
+    console.log(JSON.stringify(rows))
 
     const dbResponse = rows;
     if (dbResponse[0] === undefined) {
@@ -506,8 +561,15 @@ const { select } = require('async');
       return res.status(status.notfound).send(errorMessage);
     }
     
+    
+    fn.ensureString(dbResponse,"update_values_test")
+    
     successMessage.registros = dbResponse.length;
-    successMessage.data = dbResponse//.map(e=>e["update_values"]);
+    successMessage.data = dbResponse.map((e)=>fn.renameKeys(e, newKeys))
+    
+    //.map((item)=>fn.numericPropToString(item["update_values"]))
+                            
+                    
     
    
     return res.status(status.success).send(successMessage);
@@ -516,8 +578,6 @@ const { select } = require('async');
     return res.status(status.error).send(errorMessage);
   }
 };
-
-
 
 
 
@@ -814,16 +874,15 @@ const resetItensExportadosByUserId = async (req, res) => {
 
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
 
+  
+
   var strQuery = `
-    select * from pricepoint.filtro_multiplo (
-    null,null,null,null,null,null,null,null,null,null,      
-    ${req.body.db_schema},null,0,0,0,1,${req.body.uid},'${offs}','${page_items}');`
+  select * from pricepoint.filtro_multiplo(null,null,null,null,null,null,null,null,null,null,${req.body.db_schema},null,0,0,1,1,${req.body.uid},'${offs}','${page_items}');`
   
 
    const strQueryCount = `
    select count(*) from pricepoint.filtro_multiplo (
-   null,null,null,null,null,null,null,null,null,null,      
-   ${req.body.db_schema},null,0,0,0,1,${req.body.uid},null,null);`
+  null,null,null,null,null,null,null,null,null,null,${req.body.db_schema},null,0,0,1,1,${req.body.uid},null,null);`
      
 
    try {
@@ -922,7 +981,37 @@ const resetItensExportadosByUserId = async (req, res) => {
    }
  };
 
+/**
+  * elimina os itens bloqueados pelo usuario 
+  * @param {object} req 
+  * @param {object} res 
+  * @param {object} uid:not null
+  * @param {object} db_schema:'pricing_bigbox'
+  * @returns {string} OK
+  */
+ const resetItensBloqueadosByUserId = async (req, res) => {
 
+  var strQuery = `select pricepoint.reset_itens_bloqueados(${req.body.uid},${req.body.db_schema})`
+   try {
+     
+     const { rows } = await dbQuery.query(strQuery);
+     //console.log(JSON.stringify(rows))
+
+     const dbResponse = rows;
+     if (dbResponse[0] === undefined) {
+       errorMessage.error = 'Não encontramos itens bloqueados pelo usuario ' + req.body.uid + '...';
+       return res.status(status.success).send(errorMessage);
+     }
+     
+     successMessage.registros = dbResponse.length;
+     successMessage.data = dbResponse;
+    
+     return res.status(status.success).send(successMessage);
+   } catch (error) {
+     errorMessage.error = JSON.stringify(error);
+     return res.status(status.error).send(errorMessage);
+   }
+ };
 
 
 
@@ -1036,12 +1125,12 @@ const slidersMinMaxValues = async (req, res) => {
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
       
   strQueryMinMax = `select 
-                    max(diferenca_total) as diferenca_total_maximo, 
-                    min(diferenca_total) as diferenca_total_minimo,
-                    max(novamargem) as nova_margem_maximo, 
-                    min(novamargem) as nova_margem_minimo,
-                    max(variacaonovopreco) as variacao_novo_preco_maximo, 
-                    min(variacaonovopreco) as variacao_novo_preco_minimo
+                    round(max(diferenca_total)+1) as diferenca_total_maximo, 
+                    round(min(diferenca_total)-1) as diferenca_total_minimo,
+                    round(max(margem_nova)+1) as nova_margem_maximo, 
+                    round(min(margem_nova)-1) as nova_margem_minimo,
+                    round(max(var_novo_preco)+1) as variacao_novo_preco_maximo, 
+                    round(min(var_novo_preco)-1) as variacao_novo_preco_minimo
                     from pricepoint.filtro_multiplo (
                       ${req.body.departamento},
                       ${req.body.secao},
@@ -1054,7 +1143,7 @@ const slidersMinMaxValues = async (req, res) => {
                       ${req.body.sensibilidade},
                       ${req.body.papel_categoria},      
                       ${req.body.db_schema},
-                      null,0,0,0,0,null);`
+                      null,0,0,0,0,null) where analizado::numeric <> 2;`
    
     try {
   
@@ -1108,10 +1197,10 @@ const filterBySliderValue = async (req, res) => {
       campo_slider = "diferenca_total";
       break;
     case 2:
-      campo_slider = "novamargem";
+      campo_slider = "margem_nova";
       break;
     case 3:
-      campo_slider = "variacaonovopreco";
+      campo_slider = "var_novo_preco";
   }
 
   var a =  req.body.departamento=="null"?"":`and nome_departamento=${req.body.departamento}`
@@ -1138,7 +1227,7 @@ const filterBySliderValue = async (req, res) => {
     ordem = `order by ${campo_slider} asc`  
   }
 
-  strQuery = `select * from ${schema}.vw_dados_totais vdt ${filtro} ${tree} ${ordem} offset ${offs} limit ${page_items}`
+  strQuery = `select * from ${schema}.vw_dados_totais vdt ${filtro} ${tree} ${ordem}`
 
   strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${filtro} ${tree}`
 
@@ -1151,22 +1240,22 @@ const filterBySliderValue = async (req, res) => {
         
         //
         //console.log('ambosValoeres...> %s --- %s',abaixo_de,acima_de)
-        outliers= `where ( ${campo_slider} < ${abaixo_de} or ${campo_slider} > ${acima_de} )`
+        outliers= `where ( ${campo_slider}::numeric < ${abaixo_de}::numeric or ${campo_slider}::numeric > ${acima_de}::numeric )`
         if (acima_de == abaixo_de){
-          strQuery = `select * from ${schema}.vw_dados_totais vdt where 1=1 ${tree} ${ordem} offset ${offs} limit ${page_items}`
+          strQuery = `select * from ${schema}.vw_dados_totais vdt where 1=1 ${tree} ${ordem}`
         }
 
       }else{
 
-          outliers = abaixo_de!==null?`where ${campo_slider} <= ${abaixo_de}`:`where ${campo_slider} >= ${acima_de}`
+          outliers = abaixo_de!==null?`where ${campo_slider}::numeric < ${abaixo_de}`:`where ${campo_slider}::numeric > ${acima_de}`
           
       }
 
       ordem = `order by ${campo_slider} desc`
 
-      strQuery = `select * from ${schema}.vw_dados_totais vdt ${outliers} ${tree} ${ordem} offset ${offs} limit ${page_items}`
+      strQuery = `select * from ${schema}.vw_dados_totais vdt ${outliers} ${tree} and analizado::numeric <> 2 ${ordem}`
 
-      strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${outliers} ${tree}`
+      strQueryCount = `select count(*) from ${schema}.vw_dados_totais vdt ${outliers} ${tree} and analizado::numeric <> 2`
   }
 
   //console.log('outliers...> ' + outliers + ' ordem...> ' + ordem)
@@ -1198,55 +1287,58 @@ const filterBySliderValue = async (req, res) => {
           var id_editavel_array = []
           
           dbResponse.forEach((item)=>{
-            //console.log('eh um item pai editavel? %s --- id: s%',item.cod_pai_proporcao !== item.codigo_filhos,item.id_editavel)
+            console.log('eh um item pai editavel? %s --- id: %s',item.cod_pai_proporcao == item.codigo_filhos,item.id_editavel)
               if (item.cod_pai_proporcao !== item.codigo_filhos){
                 id_editavel_array.push(item.id_editavel)
-                //console.log('adiciona? %s ---- SIM',item.id_editavel)
+                console.log('adiciona? %s ---- SIM',item.id_editavel)
               }else{
                 id_editavel_array = id_editavel_array.filter(e => e !== item.id_editavel)
-                //console.log('removido %s ---- SIM',item.id_editavel)
+                console.log('removido %s ---- SIM',item.id_editavel)
               }
               
           })
           
           if(id_editavel_array.length > 0){
               var pais_editaveis_ausentes = "(" + [...new Set(id_editavel_array)].map(array_item => `'${array_item}'`).join(',') + ")"
-              //console.log('array de ids editaveis ===>' + pais_editaveis_ausentes)
+              console.log('array de ids editaveis ===>' + pais_editaveis_ausentes)
               const result = await dbQuery.query(`select * from ${schema}.vw_dados_totais where id_editavel IN ${pais_editaveis_ausentes} and flag_pai_ou_filho = 'PAI'`); 
               var pais_editaveis = result.rows;
               // atualiza o numero de registros e paginas
               sm.registros = parseInt(sm.registros) + parseInt(Object.keys(pais_editaveis).length)
 
-              //console.log('pais_editaveis quantidade ===>' + Object.keys(pais_editaveis).length)
+              console.log('pais_editaveis quantidade ===>' + Object.keys(pais_editaveis).length)
 
               sm.paginas = Math.ceil(sm.registros / page_items)
 
-              //console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
+              console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
 
               sm.pais_editaveis_ausentes = pais_editaveis_ausentes
 
               pais_editaveis.forEach(obj=>dbResponse.push(obj))
               
-              sm.pagina = pagina
-              sm.start_at = offs + 1;
-              sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+              sm.pagina = 1
+              sm.start_at = 1;
+              sm.end_at = sm.registros;
               sm.data = dbResponse.sort(function(a, b) {
+                        //classifica pelo valor do slider tudo decrescente 
+                        //if (a[campo_slider] > b[campo_slider]) return -1
+                        //if (a[campo_slider] < b[campo_slider]) return 1
                         //If the first item comes first in the alphabet, move it up
                         if (a.id_editavel > b.id_editavel) return 1
                         if (a.id_editavel < b.id_editavel) return -1
                         //poe o pai primeiro
                         if (a.flag_pai_ou_filho > b.flag_pai_ou_filho) return -1
                         if (a.flag_pai_ou_filho < b.flag_pai_ou_filho) return 1
-                      });
+                      })//.map(e=>  ['id_editavel', 'novamargem'].reduce(function(o, k) { o[k] = e[k]; return o; }, {}));
   
                           
               return res.status(status.success).send(sm);              
           
           }else{
 
-            sm.pagina = pagina
-            sm.start_at = offs + 1;
-            sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
+            sm.pagina = 1
+            sm.start_at = 1;
+            sm.end_at = sm.registros;
             sm.data = dbResponse;
   
           
@@ -1265,6 +1357,7 @@ const filterBySliderValue = async (req, res) => {
 
 
 
+
   module.exports = {getAllFilters, 
                     getGestaoTotalizadores,
                     getTotalizadoresParaItensEditados,
@@ -1272,12 +1365,14 @@ const filterBySliderValue = async (req, res) => {
                     //filterTablePaisFilhos,
                     //filterTableItensProporcionais,
                     filtroDependente,
+                    filtroDependente2,
                     getFilhosByPaiProporcional,
                     updateNovoPreco,
                     updateNovoPrecoTeste, //remover esse ***********
                     updateCheckboxMultiploOnClick,
                     getItensEditadosByUserId,
                     getItensBloqueadosByUserId,
+                    resetItensBloqueadosByUserId,
                     getItensExportadosByUserId,
                     resetItensEditadosByUserId,
                     resetItensExportadosByUserId,
