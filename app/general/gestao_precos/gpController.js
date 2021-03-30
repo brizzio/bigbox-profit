@@ -25,20 +25,11 @@ const { select } = require('async');
   const getAllFilters = async (req, res) => {
 
     //var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-
+    // fornecedor, grupo, produto, bandeira, sensibilidade, papel_categoria, sub_grupo, "cluster", departamento, secao
     try {
       var strQuery = `select 
-        array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
-        array_agg(DISTINCT  nome_grupo) AS grupo,
-        array_agg(DISTINCT  descricao_produto) AS produto,
-        array_agg(DISTINCT  bandeira) AS bandeira,
-        array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade,
-        array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
-        array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
-        array_agg(DISTINCT  cluster_simulador) AS cluster,
-        array_agg(DISTINCT  nome_departamento) AS departamento,
-        array_agg(DISTINCT  nome_secao) AS secao
-      from pricepoint.arvore_filtro (null,null,null,null,null,null,null,null,null,null,'${req.params.db_schema}',null,0,0,0);`;
+      bandeira, "cluster", departamento, secao, grupo, sub_grupo, fornecedor, papel_categoria, sensibilidade      
+      from ${req.params.db_schema}.mv_filters;`;
 
       const { rows } = await dbQuery.query(strQuery);
      // console.log(JSON.stringify(rows))
@@ -75,31 +66,27 @@ const { select } = require('async');
    */
   const filtroDependente = async (req, res) => {
 
-  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-  // ${req.body.departamento},
-  // ${req.body.secao},
-  // ${req.body.grupo},
-  // ${req.body.sub_grupo},---------
-  // ${req.body.produto},
-  // ${req.body.fornecedor},
-  // ${req.body.bandeira},-----------
-  // ${req.body.cluster},
-  // ${req.body.sensibilidade},
-  // ${req.body.papel_categoria},
+  var msg = {}
+  msg.data = [];
+  var strQuery =''
 
-   const strQuery = `
-      select * from pricepoint.filtro_dependente(
-        ${req.body.departamento},
-        ${req.body.secao},
-        ${req.body.grupo},
-        ${req.body.sub_grupo},
-        ${req.body.produto},
-        ${req.body.fornecedor},
-        ${req.body.bandeira},
-        ${req.body.cluster},
-        ${req.body.sensibilidade},
-        ${req.body.papel_categoria},
-        '${schema}',null,0,0,0,0,null,null,null);`
+
+//*** {and_where_filters} & {db}**** 
+//estes itens são introduzidos no req.body pela função filterStringBuilder(MIDDLEWARE)
+//----chamada pelo router --- 
+
+strQuery = `select 
+            array_agg(DISTINCT  bandeira) AS bandeira,
+            array_agg(DISTINCT  cluster_simulador) AS cluster,
+            array_agg(DISTINCT  nome_departamento) AS departamento,
+            array_agg(DISTINCT  nome_secao) AS secao,
+            array_agg(DISTINCT  nome_grupo) AS grupo,
+            array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+            array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+            array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+            array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+            from ${req.body.db}.filtro_dependente where 1=1
+              ${req.body.and_where_filters};`
       
     try {
       
@@ -108,8 +95,7 @@ const { select } = require('async');
 
       const dbResponse = rows;
       if (dbResponse[0] === undefined) {
-        var msg = {}
-        msg.data = [];
+       
         return res.status(status.success).send(msg);
       }
       
@@ -122,55 +108,6 @@ const { select } = require('async');
     }
   };
 
-
-  const filtroDependente2 = async (req, res) => {
-
-    var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-    // ${req.body.departamento},
-    // ${req.body.secao},
-    // ${req.body.grupo},
-    // ${req.body.sub_grupo},---------
-    // ${req.body.produto},
-    // ${req.body.fornecedor},
-    // ${req.body.bandeira},-----------
-    // ${req.body.cluster},
-    // ${req.body.sensibilidade},
-    // ${req.body.papel_categoria},
-  
-     const strQuery = `
-        select * from pricepoint.filtro_dependente(
-          ${req.body.departamento},
-          ${req.body.secao},
-          ${req.body.grupo},
-          ${req.body.sub_grupo},
-          ${req.body.produto},
-          ${req.body.fornecedor},
-          ${req.body.bandeira},
-          ${req.body.cluster},
-          ${req.body.sensibilidade},
-          ${req.body.papel_categoria},
-          '${schema}',null,0,0,0,0,null,null,null);`
-        
-      try {
-        
-        const { rows } = await dbQuery.query(strQuery);
-        //console.log(JSON.stringify(rows))
-  
-        const dbResponse = rows;
-        if (dbResponse[0] === undefined) {
-          var msg = {}
-          msg.data = [];
-          return res.status(status.success).send(msg);
-        }
-        
-        successMessage.data = dbResponse;
-       
-        return res.status(status.success).send(successMessage);
-      } catch (error) {
-        errorMessage.error = JSON.stringify(error);
-        return res.status(status.error).send(errorMessage);
-      }
-    };
 
   /**
      * Retorna a tabela filtrada
@@ -201,8 +138,6 @@ const { select } = require('async');
   var page_items= parseInt(req.body.registros.replace("'","")) 
   var pagina = parseInt(req.body.pagina.replace("'",""))
   var offs = (pagina -1) * page_items
-  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-  //var tipo = //req.body.tipo.replace(new RegExp("'", 'g'), "")
   var opt = ["filtro","paisefilhos","proporcionais"]
   var str_params = ''
 
@@ -213,48 +148,21 @@ const { select } = require('async');
   //console.log( endpoint + ' >>> ' + opt[2] + ' === ' +  (endpoint == opt[2]))
 
     if (endpoint == opt[0]){
-      str_params = "'PAI',0,0,null,0,null";
+      str_params = " AND flag_pai_ou_filho='PAI'::text";
     } else if (endpoint == opt[1]) {
-      str_params = "null,1,0,null,0,null";
+      str_params = " AND flag_pai_ou_filho='FILHO'::text";
     } else {
-      str_params = "null,0,1,null,0,null";
+      str_params = " and ftp_fator::numeric <> 1::numeric AND flag_pai_ou_filho = 'FILHO'::text";
     }
     
-
   //console.log('complemento=====>' +  str_params)
-  
-  var strQuery = `
-    select * from pricepoint.filtro_multiplo (
-      ${req.body.departamento},
-      ${req.body.secao},
-      ${req.body.grupo},
-      ${req.body.sub_grupo},
-      ${req.body.produto},
-      ${req.body.fornecedor},
-      ${req.body.bandeira},
-      ${req.body.cluster},
-      ${req.body.sensibilidade},
-      ${req.body.papel_categoria},      
-      '${schema}',
-      ${str_params},
-      '${offs}',
-      '${page_items}');`
+  //*** {and_where_filters} & {db}**** 
+  //estes itens são introduzidos no req.body pela função filterStringBuilder(MIDDLEWARE)
+  //----chamada pelo router --- 
 
-  const strQueryCount = `
-    select count(*) from pricepoint.filtro_multiplo (
-      ${req.body.departamento},
-      ${req.body.secao},
-      ${req.body.grupo},
-      ${req.body.sub_grupo},
-      ${req.body.produto},
-      ${req.body.fornecedor},
-      ${req.body.bandeira},
-      ${req.body.cluster},
-      ${req.body.sensibilidade},
-      ${req.body.papel_categoria},      
-      '${schema}',
-      ${str_params},null,null
-      );`      
+  var strQuery = `select * from ${req.body.db}.vw_dados_totais where 1=1 ${req.body.and_where_filters} ${str_params} offset ${offs} limit ${page_items};`
+
+  const strQueryCount = `select count(*) from ${req.body.db}.vw_dados_totais where 1=1 ${req.body.and_where_filters} ${str_params} offset ${offs} limit ${page_items};`
   
   try {
     
@@ -313,21 +221,35 @@ const { select } = require('async');
    */
   const getGestaoTotalizadores = async (req, res) => {
 
-    //var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+    //console.log('complemento=====>' +  str_params)
+  //*** {and_where_filters} & {db}**** 
+  //estes itens são introduzidos no req.body pela função filterStringBuilder(MIDDLEWARE)
+  //----chamada pelo router --- 
+
     
     var strQuery = `
-    select * from pricepoint.filtro_multiplo_totalizador (
-      ${req.body.departamento},
-      ${req.body.secao},
-      ${req.body.grupo},
-      ${req.body.sub_grupo},
-      ${req.body.produto},
-      ${req.body.fornecedor},
-      ${req.body.bandeira},
-      ${req.body.cluster},
-      ${req.body.sensibilidade},
-      ${req.body.papel_categoria},      
-      ${req.body.db_schema},null,0,0,0,0,null);`
+    select 
+    count(*) AS itens_exportados,
+    sum(lucro_rs) / sum(venda_rs) as margem_atual_ponderada,  
+    case when sum(vendas::numeric) is null then 0 else sum(vendas::numeric) end as total_vendas,
+    sum(lucro_rs_novo) / sum(venda_rs_novo) as margem_nova_ponderada,
+    case when to_char(sum(preco_atual_varejo::numeric * vendas::numeric), 'FM999999999999999999'::text)::numeric <> 0 then to_char(sum(preco_atual_varejo::numeric * vendas::numeric), 'FM999999999999999999'::text)::numeric else 0.0 end AS venda_total_atual,
+    case when to_char(sum(coalesce (preco_decisao::numeric,preco_min_max::numeric) * qtde_vendas_estimada), 'FM999999999999999999'::text)::numeric <> 0 then to_char(sum(coalesce (preco_decisao::numeric,preco_min_max::numeric) * qtde_vendas_estimada), 'FM999999999999999999'::text)::numeric else 0.0 end AS venda_total_novo_preco,
+       case when sum(vendas::numeric) <>0  then sum(margem_objetiva_ponderada::numeric) /sum(vendas::numeric)else 0.0 end as margem_objetiva_ponderada,
+    case when sum(diferenca_preco_total) is null then 0.00 else sum(diferenca_preco_total) end as diferenca_total,
+    case when avg(indice_preco_atual)>0 then avg(indice_preco_atual) else 0 end AS indice_competitividade_atual_medio,
+    case when  greatest (sum(preco_ponderado_cliente),sum(preco_ponderado_concorrente)) >0 then  (((sum(preco_ponderado_cliente) - sum(preco_ponderado_concorrente)) / greatest (sum(preco_ponderado_cliente),sum(preco_ponderado_concorrente))) +1)*100 else 0.0 end as indice_competitividade_atual_ponderado,
+    case when avg(indice_novo_atual) >0 then avg(indice_novo_atual) else 0 end AS indice_final_medio,
+    case when avg(indice_competitividade_novo_medio_) >0 then avg(indice_competitividade_novo_medio_) else 0 end AS indice_competitividade_novo_medio,
+    case when greatest (sum(preco_ponderado_cliente_novo),sum(preco_ponderado_concorrente)) >0 then  (((sum(preco_ponderado_cliente_novo) - sum(preco_ponderado_concorrente)) / greatest (sum(preco_ponderado_cliente_novo),sum(preco_ponderado_concorrente))) +1)*100 else 0.0 end as indice_competitividade_novo_ponderado,
+    case when sum(case when analizado = 1 then 1 else 0 end)::numeric is null then 0 else sum(case when analizado = 1 then 1 else 0 end)::numeric end as itens_editados,
+    case when sum (case when coalesce (preco_decisao::numeric,preco_min_max::numeric) <> preco_atual_varejo::numeric then 1 else 0 end)::numeric is null then 0 else sum (case when coalesce (preco_decisao::numeric,preco_min_max::numeric) <> preco_atual_varejo::numeric then 1 else 0 end)::numeric end as itens_preco_alterado,
+    case when sum(vendas::numeric) >0 then sum(margem_sugestao_ponderada) / sum(vendas::numeric)else 0.0 end as margem_regular_sugestao,
+    case when avg(indice_novo_sugestao) >0 then avg(indice_novo_sugestao) else 0 end AS indice_medio_sugestao,
+    case when greatest (sum(preco_ponderado_cliente_sugestao),sum(preco_ponderado_concorrente)) >0 then  (((sum(preco_ponderado_cliente_sugestao) - sum(preco_ponderado_concorrente)) / greatest (sum(preco_ponderado_cliente_sugestao),sum(preco_ponderado_concorrente))) +1)*100 else 0.0 end as indice_ponderado_sugestao,
+    sum(lucro_realizado) / sum(receita_realizada) as margem_real
+    from ${req.body.db}.vw_dados_totais_totalizador2
+    where 1=1 ${req.body.and_where_filters}`
 
     
     try {
@@ -360,12 +282,29 @@ const { select } = require('async');
   */
   const getTotalizadoresParaItensEditados = async (req, res) => {
 
-    //var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
+    var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
     
-    var strQuery = `
-    select * from pricepoint.filtro_multiplo_totalizador (
-    null,null,null,null,null,null,null,null,null,null,      
-    ${req.body.db_schema},null,0,0,1,0,null);`
+    var strQuery = `select 
+    count(*) AS itens_exportados,
+    sum(lucro_rs) / sum(venda_rs) as margem_atual_ponderada,  
+    case when sum(vendas::numeric) is null then 0 else sum(vendas::numeric) end as total_vendas,
+    sum(lucro_rs_novo) / sum(venda_rs_novo) as margem_nova_ponderada,
+    case when to_char(sum(preco_atual_varejo::numeric * vendas::numeric), 'FM999999999999999999'::text)::numeric <> 0 then to_char(sum(preco_atual_varejo::numeric * vendas::numeric), 'FM999999999999999999'::text)::numeric else 0.0 end AS venda_total_atual,
+    case when to_char(sum(coalesce (preco_decisao::numeric,preco_min_max::numeric) * qtde_vendas_estimada), 'FM999999999999999999'::text)::numeric <> 0 then to_char(sum(coalesce (preco_decisao::numeric,preco_min_max::numeric) * qtde_vendas_estimada), 'FM999999999999999999'::text)::numeric else 0.0 end AS venda_total_novo_preco,
+       case when sum(vendas::numeric) <>0  then sum(margem_objetiva_ponderada::numeric) /sum(vendas::numeric)else 0.0 end as margem_objetiva_ponderada,
+    case when sum(diferenca_preco_total) is null then 0.00 else sum(diferenca_preco_total) end as diferenca_total,
+    case when avg(indice_preco_atual)>0 then avg(indice_preco_atual) else 0 end AS indice_competitividade_atual_medio,
+    case when  greatest (sum(preco_ponderado_cliente),sum(preco_ponderado_concorrente)) >0 then  (((sum(preco_ponderado_cliente) - sum(preco_ponderado_concorrente)) / greatest (sum(preco_ponderado_cliente),sum(preco_ponderado_concorrente))) +1)*100 else 0.0 end as indice_competitividade_atual_ponderado,
+    case when avg(indice_novo_atual) >0 then avg(indice_novo_atual) else 0 end AS indice_final_medio,
+    case when avg(indice_competitividade_novo_medio_) >0 then avg(indice_competitividade_novo_medio_) else 0 end AS indice_competitividade_novo_medio,
+    case when greatest (sum(preco_ponderado_cliente_novo),sum(preco_ponderado_concorrente)) >0 then  (((sum(preco_ponderado_cliente_novo) - sum(preco_ponderado_concorrente)) / greatest (sum(preco_ponderado_cliente_novo),sum(preco_ponderado_concorrente))) +1)*100 else 0.0 end as indice_competitividade_novo_ponderado,
+    case when sum(case when analizado = 1 then 1 else 0 end)::numeric is null then 0 else sum(case when analizado = 1 then 1 else 0 end)::numeric end as itens_editados,
+    case when sum (case when coalesce (preco_decisao::numeric,preco_min_max::numeric) <> preco_atual_varejo::numeric then 1 else 0 end)::numeric is null then 0 else sum (case when coalesce (preco_decisao::numeric,preco_min_max::numeric) <> preco_atual_varejo::numeric then 1 else 0 end)::numeric end as itens_preco_alterado,
+    case when sum(vendas::numeric) >0 then sum(margem_sugestao_ponderada) / sum(vendas::numeric)else 0.0 end as margem_regular_sugestao,
+    case when avg(indice_novo_sugestao) >0 then avg(indice_novo_sugestao) else 0 end AS indice_medio_sugestao,
+    case when greatest (sum(preco_ponderado_cliente_sugestao),sum(preco_ponderado_concorrente)) >0 then  (((sum(preco_ponderado_cliente_sugestao) - sum(preco_ponderado_concorrente)) / greatest (sum(preco_ponderado_cliente_sugestao),sum(preco_ponderado_concorrente))) +1)*100 else 0.0 end as indice_ponderado_sugestao,
+    sum(lucro_realizado) / sum(receita_realizada) as margem_real
+    from ${req.body.db}.vw_dados_totais_totalizador where analizado=1;`
     
     try {
       
@@ -389,61 +328,6 @@ const { select } = require('async');
   };
 
   
-
-  
-  /**
-  * filtra a tabela gestão de precos e retorna todos os registros (pais e filhos
-  * associados a um pai proporcional 
-  * @param {object} req 
-  * @param {object} res 
-  * @param {object} cluster:not null
-  * @param {object} codigo_pai_proporcional:not null
-  * @param {object} db_schema:'pricing_bigbox'
-  * @returns {object} data
-  */
-  const getFilhosByPaiProporcional = async (req, res) => {
-    var pagina, page_items
-    
-    var cluster = req.body.cluster
-    var cod_pai_proporcional = req.body.codigo_pai_proporcional
-    var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-    
-    //pagina=req.params.pagina 
-    //var offs = (pagina -1)*page_items
-    const strQuery = `select * from pricepoint.filtro_multiplo (
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      ${cluster},
-      null,
-      null,      
-      '${schema}',null,0,1,0,0,null) where cod_pai_proporcao =${cod_pai_proporcional};`
-    
-    try {
-       const { rows } = await dbQuery.query(strQuery);
-      //console.log(JSON.stringify(rows))
-
-      const dbResponse = rows;
-      if (dbResponse[0] === undefined) {
-        var msg = {}
-        msg.data = [];
-        return res.status(status.success).send(msg);
-      }
-      
-      successMessage.registros = dbResponse.length;
-      successMessage.data = dbResponse;
-      
-     
-      return res.status(status.success).send(successMessage);
-    } catch (error) {
-      errorMessage.error = JSON.stringify(error);
-      return res.status(status.error).send(errorMessage);
-    }
-  };
 
    /**
   * consulta a tabela de pesquisas e retorna todos os registros de pesquisa
@@ -503,42 +387,9 @@ const { select } = require('async');
   * @returns {object array} data:[{"update_preco_decisao": novo preço atacado com 
   * arredondamento}]
   */
-  const updateNovoPreco = async (req, res) => {
-    
-    var cluster = req.body.cluster
-    var cod_pai = req.body.codigo_pai
-    var analisado = req.body.analisado
-    //var exportado = req.body.exportado
-    var preco_decisao = req.body.preco_decisao
-    var user = req.body.uid
 
-    var strQuery = `select pricepoint.update_values(null,null,null,null,null,null,null,null,null,null,${analisado},${user},${req.body.db_schema},${cod_pai},${preco_decisao},'0',${cluster});`
-    
-    try {
-       const { rows } = await dbQuery.query(strQuery);
-      //console.log(JSON.stringify(rows))
 
-      const dbResponse = rows;
-      if (dbResponse[0] === undefined) {
-        errorMessage.error = 'Erro na gravação de dados de novo preço';
-        return res.status(status.notfound).send(errorMessage);
-      }
-      
-      successMessage.registros = dbResponse.length;
-      successMessage.data = dbResponse//.map(e=>e["update_values"]);
-      
-     
-      return res.status(status.success).send(successMessage);
-    } catch (error) {
-      errorMessage.error = JSON.stringify(error);
-      return res.status(status.error).send(errorMessage);
-    }
-  };
-
-  /**
-  *  REMOVER AQUI EDPOIS DE VALIDADA 
-  */
- const updateNovoPrecoTeste = async (req, res) => {
+ const updateNovoPreco = async (req, res) => {
     
   var cluster = req.body.cluster
   var cod_pai = req.body.codigo_pai
@@ -568,9 +419,7 @@ const { select } = require('async');
     successMessage.data = dbResponse.map((e)=>fn.renameKeys(e, newKeys))
     
     //.map((item)=>fn.numericPropToString(item["update_values"]))
-                            
-                    
-    
+     
    
     return res.status(status.success).send(successMessage);
   } catch (error) {
@@ -606,8 +455,6 @@ const { select } = require('async');
   */
   const updateCheckboxMultiploOnClick = async (req, res) => {
 
-    
-    //var strQuery = `select * from ${schema}.update_checkbox_multiplo ($,${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},,${req.body.cluster},,,${req.body.analisado},${req.body.uid});`
 
     var strQuery = `select pricepoint.update_checkboxes(
       ${req.body.departamento},
@@ -645,6 +492,7 @@ const { select } = require('async');
   };
 
   /**
+     * ESTA FUNCAO NAO USA O MIDDLEWARE filterStringBuilder.js
      * Recupera os itens alterados pelo usuario 
      * @param {object} req 
      * @param {object} res 
@@ -655,21 +503,16 @@ const { select } = require('async');
      * @returns {object} data
   */
   const getItensEditadosByUserId = async (req, res) => {
-    
+    var msg = {}
     var page_items= parseInt(req.body.registros.replace("'","")) 
     var pagina = parseInt(req.body.pagina.replace("'",""))
     var offs = (pagina -1) * page_items
+    var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
 
-    var strQuery = `
-    select * from pricepoint.filtro_multiplo (
-    null,null,null,null,null,null,null,null,null,null,      
-    ${req.body.db_schema},null,0,0,1,0,${req.body.uid},'${offs}','${page_items}');`
+    var strQuery = `select * from ${schema}.vw_dados_totais where analizado=1;`
   
 
-   const strQueryCount = `
-   select count(*) from pricepoint.filtro_multiplo (
-   null,null,null,null,null,null,null,null,null,null,      
-   ${req.body.db_schema},null,0,0,1,0,${req.body.uid},null,null);`
+   const strQueryCount = `select count(*) from ${schema}.vw_dados_totais where analizado=1;`
 
 
     try {
@@ -678,8 +521,8 @@ const { select } = require('async');
         const countSelect = await dbQuery.query(strQueryCount);
         //console.log(JSON.stringify('contagem ===> ' + rows))
         var reg = countSelect.rows[0].count
-        successMessage.registros = reg;
-        successMessage.paginas = Math.ceil(reg / page_items)
+        msg.registros = reg;
+        msg.paginas = Math.ceil(reg / page_items)
       }
 
       const { rows } = await dbQuery.query(strQuery);
@@ -688,18 +531,19 @@ const { select } = require('async');
       const dbResponse = rows;
       if (dbResponse[0] === undefined) {
         
-        var msg = {}
+        
         msg.data = [];
         //console.log('passou aqui...' + msg.data)
         return res.status(status.success).send(msg);
       }
       
-      successMessage.pagina = pagina
-      successMessage.start_at = offs + 1;
-      successMessage.end_at =  successMessage.registros < page_items? successMessage.registros : offs + page_items+1;;
-      successMessage.data = dbResponse;
+      msg.pagina = pagina
+      msg.start_at = offs + 1;
+      msg.end_at =  msg.registros < page_items? msg.registros : offs + page_items+1;;
+      msg.data = dbResponse;
      
-      return res.status(status.success).send(successMessage);
+      return res.status(status.success).send(msg);
+      
     } catch (error) {
       errorMessage.error = JSON.stringify(error);
       return res.status(status.error).send(errorMessage);
@@ -868,21 +712,17 @@ const resetItensExportadosByUserId = async (req, res) => {
   */
  const getItensExportadosByUserId = async (req, res) => {
 
+  var msg = {}
   var page_items= parseInt(req.body.registros.replace("'","")) 
   var pagina = parseInt(req.body.pagina.replace("'",""))
   var offs = (pagina -1) * page_items
 
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
 
+  var strQuery = `select * from ${schema}.vw_dados_totais where exportado=1`
   
 
-  var strQuery = `
-  select * from pricepoint.filtro_multiplo(null,null,null,null,null,null,null,null,null,null,${req.body.db_schema},null,0,0,1,1,${req.body.uid},'${offs}','${page_items}');`
-  
-
-   const strQueryCount = `
-   select count(*) from pricepoint.filtro_multiplo (
-  null,null,null,null,null,null,null,null,null,null,${req.body.db_schema},null,0,0,1,1,${req.body.uid},null,null);`
+  var strQueryCount = `select count(*) from ${schema}.vw_dados_totais where exportado=1;`
      
 
    try {
@@ -891,8 +731,8 @@ const resetItensExportadosByUserId = async (req, res) => {
       const countSelect = await dbQuery.query(strQueryCount);
       var reg = countSelect.rows[0].count
       console.log('contagem ===> ' + reg)
-      successMessage.registros = reg;
-      successMessage.paginas = Math.ceil(reg / page_items)
+      msg.registros = reg;
+      msg.paginas = Math.ceil(reg / page_items)
     }
      
      const { rows } = await dbQuery.query(strQuery);
@@ -901,17 +741,17 @@ const resetItensExportadosByUserId = async (req, res) => {
      const dbResponse = rows;
      if (dbResponse[0] === undefined) {
        
-       var msg = {}
+       
        msg.data = [];
        return res.status(status.success).send(msg);
      }
      
-     successMessage.pagina = pagina
-     successMessage.start_at = offs + 1;
-     successMessage.end_at = successMessage.registros < page_items ? successMessage.registros : offs + page_items+1;
-     successMessage.data = dbResponse;
+     msg.pagina = pagina
+     msg.start_at = offs + 1;
+     msg.end_at = msg.registros < page_items ? msg.registros : offs + page_items+1;
+     msg.data = dbResponse;
     
-     return res.status(status.success).send(successMessage);
+     return res.status(status.success).send(msg);
    } catch (error) {
      errorMessage.error = JSON.stringify(error);
      return res.status(status.error).send(errorMessage);
@@ -930,22 +770,16 @@ const resetItensExportadosByUserId = async (req, res) => {
   */
  const getItensBloqueadosByUserId = async (req, res) => {
 
+  var msg = {}
   var page_items= parseInt(req.body.registros.replace("'","")) 
   var pagina = parseInt(req.body.pagina.replace("'",""))
   var offs = (pagina -1) * page_items
 
   var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
 
-  var strQuery = `
-    select * from pricepoint.filtro_multiplo (
-    null,null,null,null,null,null,null,null,null,null,      
-    ${req.body.db_schema},null,0,0,2,0,${req.body.uid},'${offs}','${page_items}');`
+  var strQuery = `select * from ${schema}.vw_dados_totais where analizado=2;`
   
-
-   const strQueryCount = `
-   select count(*) from pricepoint.filtro_multiplo (
-   null,null,null,null,null,null,null,null,null,null,      
-   ${req.body.db_schema},null,0,0,2,0,${req.body.uid},null,null);`
+  var strQueryCount = `select count(*) ${schema}.vw_dados_totais where analizado=2;`
      
 
    try {
@@ -954,8 +788,8 @@ const resetItensExportadosByUserId = async (req, res) => {
       const countSelect = await dbQuery.query(strQueryCount);
       var reg = countSelect.rows[0].count
       console.log('contagem ===> ' + reg)
-      successMessage.registros = reg;
-      successMessage.paginas = Math.ceil(reg / page_items)
+      msg.registros = reg;
+      msg.paginas = Math.ceil(reg / page_items)
     }
      
      const { rows } = await dbQuery.query(strQuery);
@@ -964,17 +798,18 @@ const resetItensExportadosByUserId = async (req, res) => {
      const dbResponse = rows;
      if (dbResponse[0] === undefined) {
        
-       var msg = {}
+       
        msg.data = [];
        return res.status(status.success).send(msg);
      }
      
-     successMessage.pagina = pagina
-     successMessage.start_at = offs + 1;
-     successMessage.end_at = successMessage.registros < page_items ? successMessage.registros : offs + page_items+1;
-     successMessage.data = dbResponse;
+     msg.pagina = pagina
+     msg.start_at = offs + 1;
+     msg.end_at = msg.registros < page_items ? msg.registros : offs + page_items+1;
+     msg.data = dbResponse;
     
-     return res.status(status.success).send(successMessage);
+     return res.status(status.success).send(msg);
+
    } catch (error) {
      errorMessage.error = JSON.stringify(error);
      return res.status(status.error).send(errorMessage);
@@ -1060,70 +895,17 @@ const resetItensExportadosByUserId = async (req, res) => {
    }
  };
 
- const filterByDiferencaTotal = async (req, res) => {
-    
-  var strQuery = ''
-  var strQueryCount = ''
-  var filtro = ''
-  var ordem = ''
-  var sm = {}
-  var page_items= parseInt(req.body.registros.replace("'","")) 
-  var pagina = parseInt(req.body.pagina.replace("'",""))
-  var offs = (pagina -1) * page_items
-  
-  var value = parseInt(req.body.maioriguala.replace("'",""));
-
-  if(value >= 0){
-    filtro = 'where diferenca_total >= ' + value 
-    ordem = 'order by diferenca_total desc offset ' + offs +  ' limit ' + page_items
-  }else{
-    filtro = 'where diferenca_total <= ' + value
-    ordem = 'order by diferenca_total asc offset ' + offs +  ' limit ' + page_items
-  }
- 
-
-      strQuery = `select * from pricing_bigbox.filtro_extra(${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro} ${ordem};`
-
-      strQueryCount = `select count(*) from pricing_bigbox.filtro_extra (${req.body.grupo},${req.body.fornecedor},${req.body.produto},${req.body.bandeira},${req.body.sensibilidade},${req.body.papel_categoria},${req.body.sub_grupo},${req.body.cluster},${req.body.departamento},${req.body.secao}) ${filtro};`
-      
-   
-  
-    try {
-      console.log(JSON.stringify('query ===> ' + strQueryCount))
-    if (pagina == 1){
-    const countSelect = await dbQuery.query(strQueryCount);
-    var reg = countSelect.rows[0].count
-    sm.registros = reg;
-    sm.paginas = Math.ceil(reg / page_items)
-    }
-
-    const { rows } = await dbQuery.query(strQuery);
-    
-
-    const dbResponse = rows;
-    if (dbResponse[0] === undefined) {
-      errorMessage.error = JSON.stringify(req.body);
-     return res.status(status.notfound).send(errorMessage);
-    }
-    
-    sm.pagina = pagina
-    sm.start_at = offs + 1;
-    sm.end_at = sm.registros < page_items ? sm.registros : offs + page_items+1;
-    sm.data = dbResponse;
-   
-    return res.status(status.success).send(sm);
-  } catch (error) {
-    errorMessage.error = JSON.stringify(error);
-    return res.status(status.error).send(errorMessage);
-  }
-};
-
+ /**
+  * ESTA FUNCAO USA O MIDDLEWARE filterStringBuilder.js
+  * calcula os limites minimos e maximos dos sliders
+  * @param {*} req 
+  * @param {*} res 
+  */
 const slidersMinMaxValues = async (req, res) => {
     
   var sm = {}
   
-  var schema = req.body.db_schema.replace(new RegExp("'", 'g'), "")
-      
+  //o db vem do middleware   
   strQueryMinMax = `select 
                     round(max(diferenca_total)+1) as diferenca_total_maximo, 
                     round(min(diferenca_total)-1) as diferenca_total_minimo,
@@ -1131,19 +913,7 @@ const slidersMinMaxValues = async (req, res) => {
                     round(min(margem_nova)-1) as nova_margem_minimo,
                     round(max(var_novo_preco)+1) as variacao_novo_preco_maximo, 
                     round(min(var_novo_preco)-1) as variacao_novo_preco_minimo
-                    from pricepoint.filtro_multiplo (
-                      ${req.body.departamento},
-                      ${req.body.secao},
-                      ${req.body.grupo},
-                      ${req.body.sub_grupo},
-                      ${req.body.produto},
-                      ${req.body.fornecedor},
-                      ${req.body.bandeira},
-                      ${req.body.cluster},
-                      ${req.body.sensibilidade},
-                      ${req.body.papel_categoria},      
-                      ${req.body.db_schema},
-                      null,0,0,0,0,null) where analizado::numeric <> 2;`
+                    from ${req.body.db}.vw_dados_totais where 1=1 ${req.body.and_where_filters} and analizado::numeric <> 2;`
    
     try {
   
@@ -1166,7 +936,11 @@ const slidersMinMaxValues = async (req, res) => {
   }
 };
 
-
+/**
+ * ESTA FUNCAO **NAO** USA O MIDDLEWARE filterStringBuilder.js
+ * @param {*} req 
+ * @param {*} res 
+ */
 
 const filterBySliderValue = async (req, res) => {
     
@@ -1332,7 +1106,7 @@ const filterBySliderValue = async (req, res) => {
                       })//.map(e=>  ['id_editavel', 'novamargem'].reduce(function(o, k) { o[k] = e[k]; return o; }, {}));
   
                           
-              return res.status(status.success).send(sm);              
+            return res.status(status.success).send(sm);              
           
           }else{
 
@@ -1342,7 +1116,7 @@ const filterBySliderValue = async (req, res) => {
             sm.data = dbResponse;
   
           
-                            return res.status(status.success).send(sm);
+              return res.status(status.success).send(sm);
 
           }
           
@@ -1362,13 +1136,8 @@ const filterBySliderValue = async (req, res) => {
                     getGestaoTotalizadores,
                     getTotalizadoresParaItensEditados,
                     filterTable,
-                    //filterTablePaisFilhos,
-                    //filterTableItensProporcionais,
                     filtroDependente,
-                    filtroDependente2,
-                    getFilhosByPaiProporcional,
                     updateNovoPreco,
-                    updateNovoPrecoTeste, //remover esse ***********
                     updateCheckboxMultiploOnClick,
                     getItensEditadosByUserId,
                     getItensBloqueadosByUserId,
@@ -1379,7 +1148,6 @@ const filterBySliderValue = async (req, res) => {
                     getPesquisasByPai,
                     exportaItens,
                     downloadItensExportados,
-                    filterByDiferencaTotal,
                     slidersMinMaxValues,
                     filterBySliderValue,
                     filterByStringOnSearchBox

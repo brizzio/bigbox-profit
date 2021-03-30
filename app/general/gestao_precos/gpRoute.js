@@ -6,10 +6,9 @@ var {
     getTotalizadoresParaItensEditados,//ok
     filterTable, //ok
     filtroDependente,
-    filtroDependente2, //ok
-    getFilhosByPaiProporcional, // funcao com erro 
+    //sgetFilhosByPaiProporcional, // funcao com erro 
     updateNovoPreco, //ok
-    updateNovoPrecoTeste, // remover esse aqui ********************************
+    //updateNovoPrecoTeste, // remover esse aqui ********************************
     updateCheckboxMultiploOnClick, //ok
     getItensEditadosByUserId, //ok
     getItensBloqueadosByUserId, //ok ****** NOVA *******
@@ -20,7 +19,6 @@ var {
     getPesquisasByPai, //ok
     exportaItens, //ok
     downloadItensExportados,
-    filterByDiferencaTotal,
     slidersMinMaxValues,
     filterBySliderValue,
     filterByStringOnSearchBox //ok
@@ -29,6 +27,8 @@ var {
 const { verifyAPIToken }  = require('../../middlewares/verifyApiAuth');
 
 const router = express.Router();
+
+const filterStringBuilder = require('../../middlewares/filterStringBuilder')
 
 
 
@@ -50,19 +50,19 @@ router.get('/filters/:db_schema', getAllFilters); //-----------ok
 /**
 * pega os filtros correspondentes às seleções feitas
 */
-router.post('/gestao/filtro-dependentes', filtroDependente2); //------ok
+router.post('/gestao/filtro-dependentes',filterStringBuilder, filtroDependente); //------ok
 
 /**
 * filtra a tabela gestão de precos e retorna registros filtrados 
 */
-router.post('/gestao/filtro', filterTable); //------ok
-router.post('/gestao/filtro/paisefilhos', filterTable); //------ok
-router.post('/gestao/filtro/proporcionais', filterTable); //------ok
+router.post('/gestao/filtro',filterStringBuilder, filterTable); //------ok
+router.post('/gestao/filtro/paisefilhos',filterStringBuilder, filterTable); //------ok
+router.post('/gestao/filtro/proporcionais',filterStringBuilder, filterTable); //------ok
 
 /**
 * Retorna os totais da gestão de precos 
 */
-router.post('/gestao/totalizadores', getGestaoTotalizadores); //----ok
+router.post('/gestao/totalizadores',filterStringBuilder, getGestaoTotalizadores); //----ok
 
 /**
 * Retorna os totais da gestão de precos para os itens analisados e prestes a
@@ -74,7 +74,7 @@ router.post('/gestao/totalizadores-editados', getTotalizadoresParaItensEditados)
 * filtra a tabela gestão de precos e retorna todos os registros (pais e filhos
 * associados a um pai proporcional
 */
-router.post('/gestao/filtro/associados', getFilhosByPaiProporcional); //----ok
+//router.post('/gestao/filtro/associados', getFilhosByPaiProporcional); //----ok
 
 /**
 * consulta a tabela de pesquisas e retorna todos os registros de pesquisa
@@ -90,7 +90,7 @@ router.post('/gestao/update', updateNovoPreco); //-------ok
 /** REMOVER ESSA ROTA DA APLICACAO *********************
 * executa o update dos preços alterados pelo usuario
 */
-router.post('/gestao/update-teste', updateNovoPrecoTeste); //-------ok
+//router.post('/gestao/update-teste', updateNovoPrecoTeste); //-------ok
 
 /**
 * executa o update dos preços em varios chekboxes ao mesmo tempo
@@ -133,14 +133,12 @@ router.post('/gestao/file-download', downloadItensExportados);
 */
 router.post('/gestao/export/reset', resetItensExportadosByUserId); //-----ok
 
-//filtra a tabela gestão de precos e retorna registros filtrados
-router.post('/gestao/classificador/diferenca-total', filterByDiferencaTotal);
 
 //retorna os valores min e max do filtro para os sliders
-router.post('/gestao/classificador/valores-min-max-sliders', slidersMinMaxValues);
+router.post('/gestao/classificador/valores-min-max-sliders',filterStringBuilder, slidersMinMaxValues);
 
 //filtra a tabela gestão de precos e retorna registros filtrados segundo valor no slider
-router.post('/gestao/classificador/slider-filtro', filterBySliderValue);
+router.post('/gestao/classificador/slider-filtro',filterStringBuilder, filterBySliderValue);
 
 //filtra a tabela gestão de precos pelo texto no checkbox
 router.get('/gestao/search/:schema/:texto/:cluster?', filterByStringOnSearchBox);
