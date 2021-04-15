@@ -48,6 +48,7 @@ const {
     var user = {
       "id" : obj.uc_id,
       "idexport" : obj.uc_id_exportacao,
+      "separador":obj.uc_separador,
       "name" : obj.uc_nome,
       "surname" : obj.uc_sobrenome,
       "fullname" : obj.uc_nome + " " + (obj.uc_sobrenome?obj.uc_sobrenome:""),

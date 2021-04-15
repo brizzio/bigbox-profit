@@ -1,6 +1,6 @@
 module.exports = async (req, res, next) => {
-    console.log('Acessou a filterStrinBuilder ( MIDDLEWARE ) com o seguinte body:')
-    console.log(JSON.stringify(req.body))
+    //console.log('Acessou a filterStrinBuilder ( MIDDLEWARE ) com o seguinte body:')
+    //console.log(JSON.stringify(req.body))
 
     var db = req.body.db_schema.replace(new RegExp("'", 'g'), "") // remove as aspas para usar no select
     
@@ -19,6 +19,6 @@ module.exports = async (req, res, next) => {
   
     req.body.db = db
     req.body.and_where_filters = tree
-    console.log(JSON.stringify(req.body))
+    //console.log(JSON.stringify(req.body))
     next()
 };

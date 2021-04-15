@@ -1,3 +1,4 @@
+const compression = require('compression');
 var express = require('express')
 var cors = require('cors')
 var env = require('./env');
@@ -16,6 +17,10 @@ app.use('/static', express.static(__dirname + '/public'));
 
 // Add middleware for parsing URL encoded bodies (which are usually sent by browser)
 app.use(cors());
+
+// Compress all HTTP responses
+app.use(compression()); 
+
 // Add middleware for parsing JSON and urlencoded data and populating `req.body`
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());

@@ -47,6 +47,156 @@ const { select } = require('async');
   };
 
 
+  /* /**
+   * pega os filtros correspondentes às seleções feitas
+   * @param {object} req 
+   * @param {object} res 
+   * @param {object} grupo:null
+   * @param {object} fornecedor:null
+   * @param {object} produto:null
+   * @param {object} bandeira:'BIG BOX'
+   * @param {object} sensibilidade:null
+   * @param {object} papel_categoria:null
+   * @param {object} sub_grupo:null
+   * @param {object} cluster:'BIG BOX'
+   * @param {object} departamento:null
+   * @param {object} secao:'SECA DOCE'
+   * @param {object} db_schema:'pricing_bigbox'
+   * @returns {object} data
+   
+  const filtroDependente = async (req, res) => {
+
+  var msg = {}
+  msg.data = [];
+  var strQuery =''
+  var abertos = false
+  var _keys = ["nome_bandeira",
+                "cluster",
+                "departamento",
+                "secao",  
+                "grupo",
+                "subgrupo",
+                "fornecedor",
+                "papel_categoria",
+                "sensibilidade"
+              ]  
+
+
+//*** {and_where_filters} & {db}**** 
+//estes itens são introduzidos no req.body pela função filterStringBuilder(MIDDLEWARE)
+//----chamada pelo router --- 
+
+
+
+var flt = [0,0,0,0,0,0]
+
+
+var a =  (req.body.bandeira!=="null")?       [0,0,0,0,0,0,1,1,1]:flt
+var b =  (req.body.cluster!=="null")?        [0,0,1,1,1,1,1,1,1]:a
+var c = (req.body.departamento==!"null")?    [0,0,0,1,1,1,1,1,1]:b
+var d = (req.body.secao!=="null")?           [0,0,0,0,1,1,1,1,1]:c
+var e = (req.body.grupo!=="null")?           [0,0,0,0,0,1,1,1,1]:d
+var f = (req.body.sub_grupo!=="null")?       [0,0,0,0,0,0,1,1,1]:e
+var g =  (req.body.fornecedor!=="null")?     [1,1,1,1,1,1,0,1,1]:f
+var h =  (req.body.papel_categoria!=="null")?[1,1,1,1,1,1,1,0,1]:g
+flt = (req.body.sensibilidade!=="null")?     [1,1,1,1,1,1,1,1,0]:h
+
+console.log(req.body.cluster!=="null")
+console.log(flt)
+
+console.log('Array do filtro')
+console.log(flt)
+
+//se todos os filtros forem nulos, entao traz tudo aberto
+if(req.body.and_where_filters === ''){
+    console.log('filtros todos abertos')
+    abertos = true
+    strQuery = `select 
+                array_agg(DISTINCT  bandeira) AS bandeira,
+                array_agg(DISTINCT  cluster_simulador) AS cluster,
+                array_agg(DISTINCT  nome_departamento) AS departamento,
+                array_agg(DISTINCT  nome_secao) AS secao,
+                array_agg(DISTINCT  nome_grupo) AS grupo,
+                array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+                array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+                array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+                array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+                from ${req.body.db}.filtro_dependente where 1=1
+                  ${req.body.and_where_filters};` 
+}    
+else{
+    abertos = false
+    strQuery = `
+            select 
+            array_agg(DISTINCT  bandeira) AS bandeira,
+            array_agg(DISTINCT  cluster_simulador) AS cluster,
+            array_agg(DISTINCT  nome_departamento) AS departamento,
+            array_agg(DISTINCT  nome_secao) AS secao,
+            array_agg(DISTINCT  nome_grupo) AS grupo,
+            array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+            array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+            array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+            array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+        from ${req.body.db}.filtro_dependente where 1=1
+        
+        union all	
+        select 
+            array_agg(DISTINCT  bandeira) AS bandeira,
+            array_agg(DISTINCT  cluster_simulador) AS cluster,
+            array_agg(DISTINCT  nome_departamento) AS departamento,
+            array_agg(DISTINCT  nome_secao) AS secao,
+            array_agg(DISTINCT  nome_grupo) AS grupo,
+            array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+            array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+            array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+            array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+        from ${req.body.db}.filtro_dependente where 1=1 ${req.body.and_where_filters};
+    `
+
+
+}
+
+    try {
+      
+      var obj = {}
+      const { rows } = await dbQuery.query(strQuery);
+      //console.log(JSON.stringify(rows))
+
+      var dbResponse = rows;
+      if (dbResponse[0] === undefined) {
+       
+        return res.status(status.success).send(msg);
+      }
+      
+      
+        var obase = dbResponse[0]
+        var ofiltro = dbResponse[1]
+
+        //console.log(obase)
+        //console.log(ofiltro)
+      
+      
+      for (var i = 0; i < flt.length; i++) {
+            var prop = Object.keys(obase)[i]
+            var values =(flt[i] == 1)?ofiltro[prop]:obase[prop]
+            //obj[Object.keys(obase)[i]]=ofiltro[flt[i]][i]
+            obj[_keys[i]]=values
+          }
+        console.log('novo objeto')
+        console.log(obj)
+        dbResponse = obj
+      
+        
+
+      successMessage.data = dbResponse;
+     
+      return res.status(status.success).send(successMessage);
+    } catch (error) {
+      errorMessage.error = JSON.stringify(error);
+      return res.status(status.error).send(errorMessage);
+    }
+  }; */
+
   /**
    * pega os filtros correspondentes às seleções feitas
    * @param {object} req 
@@ -64,49 +214,185 @@ const { select } = require('async');
    * @param {object} db_schema:'pricing_bigbox'
    * @returns {object} data
    */
-  const filtroDependente = async (req, res) => {
+   const filtroDependente = async (req, res) => {
 
-  var msg = {}
-  msg.data = [];
-  var strQuery =''
+    var msg = {}
+    msg.data = [];
+    var strQuery =''
+    var abertos = false
+    
+    var _keys = ["nome_bandeira",
+                "cluster",
+                "departamento",
+                "secao",  
+                "grupo",
+                "subgrupo",
+                "fornecedor",
+                "papel_categoria",
+                "sensibilidade"
+              ]  
+    
+    let null_filters = {
+                bandeira:'null',
+                cluster:'null',
+                departamento:'null',
+                secao:'null',  
+                grupo:'null',
+                sub_grupo:'null',
+                fornecedor:'null',
+                papel_categoria:'null',
+                sensibilidade:'null'  
+              }
+            
+    //pega os filtros do user_config
+    var u_filters =  (req.body.filters)? JSON.Parse(req.body.filters):null_filters
+    let base_filters_where_clause = fn.makeWhereStringFromObjectFilter(u_filters)
+    
+    //processa o body da requisição
+    let combo_box_filters = {
+      bandeira:req.body.bandeira,
+      cluster:req.body.cluster,
+      departamento:req.body.departamento,
+      secao:req.body.secao,  
+      grupo:req.body.grupo,
+      sub_grupo:req.body.sub_grupo,
+      fornecedor:req.body.fornecedor,
+      papel_categoria:req.body.papel_categoria,
+      sensibilidade:req.body.sensibilidade
+    }
 
+    let combo_box_filters_where_clause = fn.makeWhereStringFromObjectFilter(combo_box_filters)
+    var db = req.body.db_schema.replace(new RegExp("'", 'g'), "") // remove as aspas para usar no select
+  
 
-//*** {and_where_filters} & {db}**** 
-//estes itens são introduzidos no req.body pela função filterStringBuilder(MIDDLEWARE)
-//----chamada pelo router --- 
-
-strQuery = `select 
-            array_agg(DISTINCT  bandeira) AS bandeira,
-            array_agg(DISTINCT  cluster_simulador) AS cluster,
-            array_agg(DISTINCT  nome_departamento) AS departamento,
-            array_agg(DISTINCT  nome_secao) AS secao,
-            array_agg(DISTINCT  nome_grupo) AS grupo,
-            array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
-            array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
-            array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
-            array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
-            from ${req.body.db}.filtro_dependente where 1=1
-              ${req.body.and_where_filters};`
-      
-    try {
-      
+/* 
+  
+    
+    var a =  (req.body.bandeira=="null")?"":` and bandeira in (${req.body.bandeira})`
+    var b =  (req.body.cluster=="null")?"":` and cluster_simulador in (${req.body.cluster})`  
+    var c = (req.body.departamento=="null")?"":`and nome_departamento in (${req.body.departamento})`
+    var d = (req.body.secao=="null")?"":` and nome_secao in (${req.body.secao})` 
+    var e = (req.body.grupo=="null")?"":` and nome_grupo in (${req.body.grupo})`
+    var f = (req.body.sub_grupo=="null")?"":` and nome_subgrupo in (${req.body.sub_grupo})`
+    var g =  (req.body.produto=="null")?"":` and descricao_produto in (${req.body.produto})`
+    var h =  (req.body.fornecedor=="null")?"":` and nome_fornecedor in (${req.body.fornecedor})`
+    var i = (req.body.sensibilidade=="null")?"":` and sensibilidade_simulador in (${req.body.sensibilidade})`
+    var j =  (req.body.papel_categoria=="null")?"":` and papel_categoria_simulador in (${req.body.papel_categoria})`
+  
+    var _filters = a+b+c+d+e+f+g+h+i+j */
+  
+  
+  var flt = [0,0,0,0,0,0,0,0,0]
+  
+  
+  var a =  (req.body.bandeira!=="null")?       [0,0,0,0,0,0,1,1,1]:flt
+  var b =  (req.body.cluster!=="null")?        [0,1,1,1,1,1,1,1,1]:a
+  var c = (req.body.departamento!=="null")?    [0,0,1,1,1,1,1,1,1]:b
+  var d = (req.body.secao!=="null")?           [0,0,0,1,1,1,1,1,1]:c
+  var e = (req.body.grupo!=="null")?           [0,0,0,0,1,1,1,1,1]:d
+  var f = (req.body.sub_grupo!=="null")?       [0,0,0,0,0,1,1,1,1]:e
+  var g =  (req.body.fornecedor!=="null")?     [1,1,1,1,1,1,0,1,1]:f
+  var h =  (req.body.papel_categoria!=="null")?[1,1,1,1,1,1,1,0,1]:g
+  flt = (req.body.sensibilidade!=="null")?     [1,1,1,1,1,1,1,1,0]:h
+  
+  console.log(req.body.cluster!=="null")
+  console.log(flt)
+  
+  console.log('Array do filtro')
+  console.log(flt)
+  
+  //se todos os filtros forem nulos, entao traz tudo aberto
+  if(req.body.and_where_filters === ''){
+      console.log('filtros todos abertos')
+      abertos = true
+      strQuery = `select 
+                  array_agg(DISTINCT  bandeira) AS bandeira,
+                  array_agg(DISTINCT  cluster_simulador) AS cluster,
+                  array_agg(DISTINCT  nome_departamento) AS departamento,
+                  array_agg(DISTINCT  nome_secao) AS secao,
+                  array_agg(DISTINCT  nome_grupo) AS grupo,
+                  array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+                  array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+                  array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+                  array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+                  from ${db}.filtro_dependente where 1=1
+                  ${base_filters_where_clause};` 
+  }    
+  else{
+      abertos = false
+      strQuery = `
+              select 
+              array_agg(DISTINCT  bandeira) AS bandeira,
+              array_agg(DISTINCT  cluster_simulador) AS cluster,
+              array_agg(DISTINCT  nome_departamento) AS departamento,
+              array_agg(DISTINCT  nome_secao) AS secao,
+              array_agg(DISTINCT  nome_grupo) AS grupo,
+              array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+              array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+              array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+              array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+          from ${db}.filtro_dependente where 1=1 ${base_filters_where_clause}
+          
+          union all	
+          select 
+              array_agg(DISTINCT  bandeira) AS bandeira,
+              array_agg(DISTINCT  cluster_simulador) AS cluster,
+              array_agg(DISTINCT  nome_departamento) AS departamento,
+              array_agg(DISTINCT  nome_secao) AS secao,
+              array_agg(DISTINCT  nome_grupo) AS grupo,
+              array_agg(DISTINCT  nome_subgrupo) AS sub_grupo,
+              array_agg(DISTINCT  nome_fornecedor) AS fornecedor,
+              array_agg(DISTINCT  papel_categoria_simulador) AS papel_categoria,
+              array_agg(DISTINCT  sensibilidade_simulador) AS sensibilidade
+          from ${db}.filtro_dependente where 1=1 ${combo_box_filters_where_clause};
+      `
+  
+  
+  }
+  
+      try {
+        
+        var obj = {}
       const { rows } = await dbQuery.query(strQuery);
       //console.log(JSON.stringify(rows))
 
-      const dbResponse = rows;
+      var dbResponse = rows;
       if (dbResponse[0] === undefined) {
        
         return res.status(status.success).send(msg);
       }
       
-      successMessage.data = dbResponse;
-     
-      return res.status(status.success).send(successMessage);
-    } catch (error) {
-      errorMessage.error = JSON.stringify(error);
-      return res.status(status.error).send(errorMessage);
-    }
-  };
+      
+        var obase = dbResponse[0]
+        var ofiltro = dbResponse[1]
+
+        //console.log(obase)
+       //console.log(ofiltro)
+      
+      
+      for (var i = 0; i < flt.length; i++) {
+            var prop = Object.keys(obase)[i]
+            console.log(prop)
+
+            console.log('flt: %s -- pega o filtrado? %s', flt[i], flt[i] == 1)
+            var values =(flt[i] == 1)?ofiltro[prop]:obase[prop]
+            //obj[Object.keys(obase)[i]]=ofiltro[flt[i]][i]
+            obj[_keys[i]]=values
+          }
+        
+          console.log('novo objeto')
+        //console.log(obj)
+        dbResponse = obj
+  
+        successMessage.data = [dbResponse];
+       
+        return res.status(status.success).send(successMessage);
+      } catch (error) {
+        errorMessage.error = JSON.stringify(error);
+        return res.status(status.error).send(errorMessage);
+      }
+    };
+
 
 
   /**
@@ -397,6 +683,10 @@ strQuery = `select
   //var exportado = req.body.exportado
   var preco_decisao = req.body.preco_decisao
   var user = req.body.uid
+  
+  let bloqueado = parseInt(analizado.replace(new RegExp("'", 'g'), "")) == 2
+
+  console.log('bloqueado: %s --  %s == %s ???', bloqueado, parseInt(analizado.replace(new RegExp("'", 'g'), "")), 2)
 
   const newKeys = { update_values_test: "update_values" };
 
@@ -404,19 +694,32 @@ strQuery = `select
   
   try {
      const { rows } = await dbQuery.query(strQuery);
-    console.log(JSON.stringify(rows))
+    //console.log(JSON.stringify(rows))
 
     const dbResponse = rows;
-    if (dbResponse[0] === undefined) {
+
+    
+    if ((dbResponse[0] === undefined && !bloqueado)) {
       errorMessage.error = 'Erro na gravação de dados de novo preço';
       return res.status(status.notfound).send(errorMessage);
     }
     
+    console.log('bloqueado: %s', bloqueado)
+
+    if (bloqueado) {
+
+        successMessage.registros = 1;
+        successMessage.data = [`Item ${cod_pai} bloqueado com sucesso`];
+        console.log('ta bloqueando...')
+
+    }else{
+        
+        fn.ensureString(dbResponse,"update_values_test")
+        successMessage.registros = dbResponse.length;
+        successMessage.data = dbResponse.map((e)=>fn.renameKeys(e, newKeys))
+    }
+
     
-    fn.ensureString(dbResponse,"update_values_test")
-    
-    successMessage.registros = dbResponse.length;
-    successMessage.data = dbResponse.map((e)=>fn.renameKeys(e, newKeys))
     
     //.map((item)=>fn.numericPropToString(item["update_values"]))
      
@@ -779,7 +1082,7 @@ const resetItensExportadosByUserId = async (req, res) => {
 
   var strQuery = `select * from ${schema}.vw_dados_totais where analizado=2;`
   
-  var strQueryCount = `select count(*) ${schema}.vw_dados_totais where analizado=2;`
+  var strQueryCount = `select count(*) from ${schema}.vw_dados_totais where analizado=2;`
      
 
    try {
@@ -884,7 +1187,9 @@ const resetItensExportadosByUserId = async (req, res) => {
        return res.status(status.success).send(msg);
      }
      
+     console.log(dbResponse)
      successMessage.pagina = 1
+     successMessage.paginas = 1
      successMessage.registros = dbResponse.length;
      successMessage.data = dbResponse;
     
@@ -1055,19 +1360,21 @@ const filterBySliderValue = async (req, res) => {
     if (dbResponse[0] === undefined) 
     {
       errorMessage.error = JSON.stringify(req.body);
-     return res.status(status.notfound).send(errorMessage);
+      return res.status(status.notfound).send(errorMessage);
     }else{
 
           var id_editavel_array = []
           
           dbResponse.forEach((item)=>{
-            console.log('eh um item pai editavel? %s --- id: %s',item.cod_pai_proporcao == item.codigo_filhos,item.id_editavel)
-              if (item.cod_pai_proporcao !== item.codigo_filhos){
-                id_editavel_array.push(item.id_editavel)
-                console.log('adiciona? %s ---- SIM',item.id_editavel)
+            //console.log('flag? %s --- é pai?: %s',item.flag_pai_ou_filho ,item.flag_pai_ou_filho =="PAI")
+            console.log('eh um item pai ou pai proporcional editavel? %s --- id: %s', item.flag_pai_ou_filho =="PAI",item.id_editavel)
+              if (item.flag_pai_ou_filho !=="PAI"){
+                id_editavel_array.push(item.cluster_simulador + item.cod_pai_proporcao)
+                console.log('pp: %s // cp: %s // cf: %s >>adiciona? %s ---- SIM',item.cod_pai_proporcao,item.codigo_pai,item.codigo_filhos,item.cluster_simulador + item.cod_pai_proporcao)
               }else{
-                id_editavel_array = id_editavel_array.filter(e => e !== item.id_editavel)
-                console.log('removido %s ---- SIM',item.id_editavel)
+                var _id = item.cluster_simulador + item.cod_pai_proporcao
+                id_editavel_array = id_editavel_array.filter(e => e !== _id)
+                console.log('removido %s ---- SIM',item.cluster_simulador + item.cod_pai_proporcao)
               }
               
           })
@@ -1084,7 +1391,7 @@ const filterBySliderValue = async (req, res) => {
 
               sm.paginas = Math.ceil(sm.registros / page_items)
 
-              console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
+              //console.log('pais_editaveis ===>' + JSON.stringify(pais_editaveis))
 
               sm.pais_editaveis_ausentes = pais_editaveis_ausentes
 
@@ -1094,12 +1401,12 @@ const filterBySliderValue = async (req, res) => {
               sm.start_at = 1;
               sm.end_at = sm.registros;
               sm.data = dbResponse.sort(function(a, b) {
-                        //classifica pelo valor do slider tudo decrescente 
-                        //if (a[campo_slider] > b[campo_slider]) return -1
-                        //if (a[campo_slider] < b[campo_slider]) return 1
-                        //If the first item comes first in the alphabet, move it up
-                        if (a.id_editavel > b.id_editavel) return 1
-                        if (a.id_editavel < b.id_editavel) return -1
+                        //classifica pelo cluster 
+                        if (a.cluster_simulador > b.cluster_simulador) return -1
+                        if (a.cluster_simulador < b.cluster_simulador) return 1
+                        //classifica pelo cod pai proporcao
+                        if (a.cod_pai_proporcao > b.cod_pai_proporcao) return 1
+                        if (a.cod_pai_proporcao < b.cod_pai_proporcao) return -1
                         //poe o pai primeiro
                         if (a.flag_pai_ou_filho > b.flag_pai_ou_filho) return -1
                         if (a.flag_pai_ou_filho < b.flag_pai_ou_filho) return 1
